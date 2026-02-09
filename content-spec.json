@@ -1,0 +1,123 @@
+{
+  "scene1_opening": {
+    "dialog": [
+      {"speaker": "narrator", "text": "A new case file lands on your desk. The label reads: VALENTINE'S DAY - CLASSIFIED."},
+      {"speaker": "narrator", "text": "You open it. Inside, a note:"},
+      {"speaker": "casefile", "text": "Carter, something's been stolen. Five of our best memories have gone missing, scattered across the places that matter most to us. I need you to find them. Follow the clues. Trust your instincts. You've always been the smarter one anyway."},
+      {"speaker": "casefile", "text": "-- Sam"},
+      {"speaker": "narrator", "text": "Pinned to the note: a photo of a pottery studio, a plane ticket stub, a dive log, a concert wristband, and a faded Polaroid of mountains at sunset."},
+      {"speaker": "narrator", "text": "Your journal is open. Your phone is charged. Let's get to work, detective."}
+    ]
+  },
+  "scene2_pottery": {
+    "dialog": [
+      {"speaker": "narrator", "text": "The first clue leads to a pottery studio in Denver. CITY MUD. The air smells like wet clay and coffee grounds."},
+      {"speaker": "narrator", "text": "Someone left a half-finished mug on the wheel. There's a note tucked inside it."},
+      {"speaker": "note", "text": "This is where it started. I saw you across the studio in overalls, hands covered in slip, and thought: okay, she's trouble. The good kind. I needed an excuse to keep talking to you. So I came up with one."},
+      {"speaker": "narrator", "text": "Two locks guard the memory hidden here. Crack them both."}
+    ],
+    "puzzle_part1_prompt": "What drink did Sam use as an excuse to keep hanging out after class?",
+    "puzzle_part1_answer": "ICEDCOFFEE",
+    "puzzle_part1_display": "ICED COFFEE",
+    "puzzle_part2_prompt": "Where did you two first hang out outside the studio?",
+    "puzzle_part2_answer": "SLOOP",
+    "puzzle_part2_display": "SLOOP",
+    "success_dialog": [
+      {"speaker": "narrator", "text": "The locks click open. A memory surfaces, warm and specific, like clay still holding the shape of someone's hands."}
+    ],
+    "memory_note": {
+      "title": "Sam's Memory: City Mud",
+      "text": "You were in overalls and your hands were a mess and we ended up at the sink next to each other talking about Paul Simon of all things. And I remember thinking, I need to not let this conversation end. So I asked if you wanted to grab an iced coffee. Which, for the record, I don't even really drink iced coffee that often. I just needed a reason to keep standing near you. We ended up at Sloop and talked for like two hours and I drove home thinking: yeah, I'm in trouble."
+    },
+    "phone_message": "Hope you're having fun playing detective. This first one's easy. It only gets harder from here cc"
+  },
+  "scene3_gymkhana": {
+    "dialog": [
+      {"speaker": "narrator", "text": "The next clue takes you across the Atlantic. London. A football stadium, an incredible restaurant, and a pub with a stage."},
+      {"speaker": "narrator", "text": "On the table at Gymkhana, someone's left a menu with a question circled in pen."},
+      {"speaker": "note", "text": "London was a gamble. Early days. Lots of time together with nowhere to hide. But we crushed it. We traveled well together. We ate incredible food. We watched the Jags lose and didn't care. And then we found a karaoke bar and sang until we physically could not keep our eyes open."},
+      {"speaker": "narrator", "text": "One of those songs mattered more than the others. Which one?"}
+    ],
+    "puzzle_prompt": "What song did you two absolutely destroy at karaoke that night?",
+    "correct_answer": "MR. BRIGHTSIDE",
+    "options": [
+      {"song": "Mr. Brightside - The Killers", "correct": true, "quip": null},
+      {"song": "Don't Stop Believin' - Journey", "correct": false, "quip": "Classic, but no. We have more edge than that. Barely. But still."},
+      {"song": "Livin' on a Prayer - Bon Jovi", "correct": false, "quip": "I mean, we probably did this one too. But it's not THE one."},
+      {"song": "Sweet Caroline - Neil Diamond", "correct": false, "quip": "Babe. I'm from Boston. I've been permanently banned from singing this in public."}
+    ],
+    "success_dialog": [
+      {"speaker": "narrator", "text": "The opening synth hits and the memory comes flooding back. Two people, deliriously tired, screaming into microphones like their lives depended on it."}
+    ],
+    "memory_note": {
+      "title": "Sam's Memory: London",
+      "text": "London was a big swing. We were still pretty new and I basically said hey, want to fly to another country together and spend a week joined at the hip? Could've been a disaster. Instead it was one of my favorite trips ever. The food at Gymkhana was insane. We watched the Jags play the Pats and I pretended to care about the right team for you. We sang at the pubs until we were deliriously exhausted and my voice was gone and I still didn't want the night to end. I remember thinking: okay, we travel well together. That matters."
+    },
+    "phone_message": "Fun fact I still can't hear Mr. Brightside without thinking of you trying to hit that high note. Iconic honestly"
+  },
+  "scene4_kohtao": {
+    "dialog": [
+      {"speaker": "narrator", "text": "The trail leads to Thailand. Koh Tao. Warm water. Sunlight cutting through the surface in shafts."},
+      {"speaker": "narrator", "text": "A dive log is open on the boat. The entry reads:"},
+      {"speaker": "note", "text": "It was like another planet down there. Except you were there too, which made it better than any planet."},
+      {"speaker": "narrator", "text": "The reef is alive with creatures. Find all six things Sam remembers from the dive."}
+    ],
+    "hidden_objects": [
+      {"id": "cuttlefish", "name": "Cuttlefish", "found_text": "This guy owned the place. Just floating there, shifting colors, like he paid rent and we were the tourists. Which, fair."},
+      {"id": "manta-ray", "name": "Little Manta Ray", "found_text": "Glided right past us like we weren't even there. Very main character energy."},
+      {"id": "trigger-fish", "name": "Trigger Fish", "found_text": "This one looked personally offended that we were in its neighborhood. Gave us the dirtiest look a fish can give."},
+      {"id": "big-tuna", "name": "Big Tuna", "found_text": "Absolutely massive. Just cruising. No thoughts, just vibes. Respect."},
+      {"id": "british-diver", "name": "British Diver", "found_text": "Random British guy who gave us a big thumbs up underwater. Legend. Hope he's doing well."},
+      {"id": "sea-urchins", "name": "Sea Urchins", "found_text": "These were EVERYWHERE. Like, aggressively everywhere. Nature's caltrops."}
+    ],
+    "success_dialog": [
+      {"speaker": "narrator", "text": "All six found. The dive log entry completes itself, ink spreading across the page like watercolor."}
+    ],
+    "memory_note": {
+      "title": "Sam's Memory: Koh Tao",
+      "text": "Diving with you was unreal. There was a cuttlefish just hovering there like it owned the whole reef. A trigger fish that looked personally annoyed we existed. This enormous tuna that had absolutely zero concern about anything. A random British diver who gave us the biggest thumbs up I've ever seen. Sea urchins literally everywhere, like the ocean's version of stepping on a Lego. And through all of it, you were right there next to me, and I kept thinking: this is like another planet. Except you're here too. So it's better."
+    },
+    "phone_message": "They swam right over us remember?? Still think about that cuttlefish honestly. He was just vibing"
+  },
+  "scene5_dillon": {
+    "dialog": [
+      {"speaker": "narrator", "text": "The final clue brings you home. Colorado. Dillon Amphitheater. The sun is going down behind the mountains and the lake is catching the last of the light."},
+      {"speaker": "narrator", "text": "Vampire Weekend is playing. The air is warm and the crowd is swaying and someone left a note folded under your seat."},
+      {"speaker": "note", "text": "This is the night I knew. Not 'liked you' knew. Really knew. The sun was doing that thing behind the mountains and you were standing there and I just thought: yeah. This one's different."},
+      {"speaker": "narrator", "text": "Carter once wrote Sam something that stuck with him. Her words are scattered. Put them back together."}
+    ],
+    "target_phrase": ["I", "think", "we", "make", "a", "great", "team"],
+    "extra_words": ["always", "never", "the", "best"],
+    "success_dialog": [
+      {"speaker": "narrator", "text": "The words fall into place. Seven words. Simple. True. The kind of thing that only gets more right over time."},
+      {"speaker": "narrator", "text": "\"I think we make a great team.\""}
+    ],
+    "memory_note": {
+      "title": "Sam's Memory: Dillon",
+      "text": "The sun was setting behind the mountains and the lake was right there and Vampire Weekend was playing and you were standing next to me and I just had this moment. This really clear, calm moment where I thought: I really, really like this person. Not in the butterflies way. In the quiet, sure way. You said once that Vampire Weekend felt like it was last week and forever ago at the same time. That's kind of how all of this feels. Like I've known you forever and also like I can't believe I get to keep doing this."
+    },
+    "phone_message": "Almost there detective. One more stop. You're gonna want to sit down for this one"
+  },
+  "scene6_valentine": {
+    "love_letter_paragraphs": [
+      "Carter,",
+      "I've been trying to figure out how to say this and I keep overcomplicating it. So I'm just going to talk.",
+      "You walked into a pottery studio and I asked you to get iced coffee and honestly that's the best decision I've ever made. Including moving to Colorado. Including every job I've taken. Iced coffee with you at Sloop. That's the one.",
+      "And then London happened and I learned that we travel well together, which is a thing I didn't know mattered until it did. We ate at Gymkhana and screamed Mr. Brightside at a pub and I lost my voice and didn't care. I watched the Jags play for you. That's love, Carter. That's real love.",
+      "Thailand was another planet. Diving next to you, seeing that cuttlefish just floating there like he owned the place, the trigger fish that wanted us dead, that enormous tuna. Sea urchins everywhere. And through all of it I kept looking over at you and thinking: how did I get here?",
+      "And then there was Dillon. Vampire Weekend. Sun going down. Lake right there. And I just knew. Not in a dramatic way. In a quiet way. The kind of knowing that doesn't need to announce itself because it's not going anywhere.",
+      "You said you think we make a great team. I think about that a lot. You said it feels like Vampire Weekend was last week and forever ago at the same time. That's exactly right. You said you love doing everything and nothing with me and everything in between. Same.",
+      "You challenge me in the best way. You make me laugh constantly. You make me want to be better at things. You're competitive about volleyball and you have strong opinions about Love Island and you'll walk 30 minutes to a cafe at 4:30 in the morning in a foreign country because you're brave like that. I love all of it.",
+      "I feel incredibly lucky. Not in the cheesy way. In the way where I genuinely cannot believe this is my life and you're in it and we get to keep doing this. I really, really like you. And I really, really love you.",
+      "Happy Valentine's Day, cc."
+    ],
+    "signoff": "xo, Sam",
+    "phone_message": "I love you tons. Happy Valentine's Day babe"
+  },
+  "journal_notes": [
+    {"label": "City Mud Studio", "hint": "Two locks, two memories. What drink? What place?", "solved": "Unlocked: Iced coffee was just an excuse. Sloop was just the beginning."},
+    {"label": "Gymkhana London", "hint": "Name the song that brought the house down.", "solved": "Unlocked: Mr. Brightside, screamed until deliriously exhausted."},
+    {"label": "Koh Tao Dive", "hint": "Six creatures (and one legend) hide in the reef.", "solved": "Unlocked: Another planet, except she was there too."},
+    {"label": "Dillon Amphitheater", "hint": "Her words are scattered. Put them back together.", "solved": "Unlocked: I think we make a great team."}
+  ]
+}

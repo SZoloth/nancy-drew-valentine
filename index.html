@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Nancy Drew: The Case of the Missing Valentine</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+--teal:#0a2a2a;--teal-light:#1a4a4a;--gold:#c9a84c;--gold-light:#e2c97e;
+--cream:#f5edd6;--burgundy:#6b1d2a;--burgundy-light:#8b3a4a;
+--ink:#2c1810;--amber:rgba(255,180,60,0.15);--hud-bg:rgba(8,32,32,0.92);
+}
+html,body{width:100%;height:100dvh;overflow:hidden;font-family:Georgia,'Times New Roman',serif;background:#000;color:var(--cream);cursor:default}
+
+/* ===== GAME VIEWPORT ===== */
+#game{position:fixed;inset:0;overflow:hidden}
+.scene{display:none;position:absolute;inset:0;bottom:60px;overflow:hidden}
+.scene.active{display:block}
+.scene-bg{position:absolute;inset:0;z-index:0;background-size:cover;background-position:center;background-repeat:no-repeat}
+.scene-content{position:absolute;inset:0;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1rem;overflow-y:auto}
+
+/* ===== SCENE BACKGROUND IMAGES ===== */
+#scene1 .scene-bg{background-image:url('assets/scene1-detective-office.jpg')}
+#scene2 .scene-bg{background-image:url('assets/scene2-pottery-studio.jpg')}
+#scene3 .scene-bg{background-image:url('assets/scene3-gymkhana-london.jpg')}
+#scene4 .scene-bg{background-image:url('assets/scene4-underwater-kohtao.jpg')}
+#scene5 .scene-bg{background-image:url('assets/scene5-dillon-amphitheater.jpg')}
+#scene6 .scene-bg{background-image:url('assets/scene6-valentine-room.jpg')}
+
+/* ===== HUD BAR ===== */
+#hud{position:fixed;bottom:0;left:0;right:0;height:60px;background:var(--hud-bg);border-top:2px solid rgba(201,168,76,0.4);display:flex;align-items:center;padding:0 12px;z-index:100;gap:8px}
+.hud-btn{width:42px;height:42px;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background 0.2s}
+.hud-btn:active{background:rgba(201,168,76,0.25)}
+.hud-btn svg{width:22px;height:22px}
+#inventory{display:flex;flex:1;gap:6px;justify-content:center;align-items:center;overflow-x:auto;padding:0 8px}
+.inv-slot{width:40px;height:40px;background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.15);border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.4s}
+.inv-slot.filled{border-color:var(--gold);background:rgba(201,168,76,0.12);animation:invPop 0.5s ease}
+.inv-slot svg{width:24px;height:24px;opacity:0;transition:opacity 0.4s}
+.inv-slot.filled svg{opacity:1}
+@keyframes invPop{0%{transform:scale(1)}50%{transform:scale(1.2)}100%{transform:scale(1)}}
+
+/* ===== DIALOG BOX ===== */
+#dialogOverlay{position:fixed;bottom:60px;left:0;right:0;z-index:90;pointer-events:none;padding:0 8px 8px}
+#dialogBox{background:rgba(8,32,32,0.88);border:1px solid rgba(201,168,76,0.3);border-radius:8px;padding:14px 16px 14px 60px;display:none;pointer-events:auto;cursor:pointer;-webkit-tap-highlight-color:transparent;position:relative;min-height:60px;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+#dialogBox.show{display:block;animation:dialogIn 0.3s ease}
+@keyframes dialogIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+#dialogIcon{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:36px;height:36px;border-radius:50%;border:1px solid rgba(201,168,76,0.4);display:flex;align-items:center;justify-content:center;background:rgba(201,168,76,0.08)}
+#dialogIcon svg{width:20px;height:20px}
+#dialogText{font-size:clamp(0.9rem,2.5vw,1rem);line-height:1.6;color:var(--cream)}
+#dialogText .speaker{color:var(--gold);font-weight:700;display:block;margin-bottom:2px;font-size:0.85rem;letter-spacing:0.05em;text-transform:uppercase}
+.dialog-continue{font-size:0.75rem;color:var(--gold-light);opacity:0.7;margin-top:6px;text-align:right}
+
+/* ===== JOURNAL POPUP ===== */
+#journalPopup{position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.7);padding:1rem}
+#journalPopup.show{display:flex}
+.journal-content{background:linear-gradient(135deg,#1a2a20,#0a1a1a);border:2px solid rgba(201,168,76,0.4);border-radius:10px;padding:1.5rem;max-width:360px;width:100%;max-height:70dvh;overflow-y:auto}
+.journal-content h3{font-family:Georgia,serif;color:var(--gold);text-align:center;margin-bottom:1rem;font-size:1.1rem}
+.journal-entry{padding:8px 0;border-bottom:1px solid rgba(201,168,76,0.15);font-size:0.9rem;color:var(--cream);opacity:0.8}
+.journal-entry.unsolved{opacity:0.4;font-style:italic}
+.journal-close{display:block;margin:1rem auto 0;background:none;border:1px solid var(--gold);color:var(--gold);padding:6px 24px;border-radius:4px;cursor:pointer;font-family:Georgia,serif}
+
+/* ===== PHONE POPUP ===== */
+#phonePopup{position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.7);padding:1rem}
+#phonePopup.show{display:flex}
+.phone-content{background:#111;border:2px solid #333;border-radius:20px;padding:2rem 1.5rem;max-width:280px;width:100%;text-align:center}
+.phone-content .notif{color:var(--gold);font-size:0.85rem;margin-bottom:0.5rem}
+.phone-content .msg{color:var(--cream);font-size:1rem;line-height:1.5;margin:1rem 0}
+.phone-close{background:none;border:1px solid #555;color:#aaa;padding:6px 24px;border-radius:20px;cursor:pointer;font-family:Georgia,serif}
+
+/* ===== MEMORY NOTE POPUP ===== */
+#memoryPopup{position:fixed;inset:0;z-index:210;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.75);padding:1rem}
+#memoryPopup.show{display:flex}
+.memory-content{background:linear-gradient(135deg,#1e1810,#12100c);border:2px solid rgba(201,168,76,0.5);border-radius:12px;padding:0;max-width:360px;width:100%;max-height:75dvh;overflow-y:auto}
+.memory-vignette{width:100%;height:160px;background-size:cover;background-position:center;border-radius:12px 12px 0 0;display:none}
+.memory-vignette.has-image{display:block}
+.memory-text-area{padding:1.5rem}
+.memory-title{font-family:Georgia,serif;color:var(--gold);font-size:1.1rem;margin-bottom:0.75rem;text-align:center}
+.memory-body{font-family:Georgia,serif;font-size:0.95rem;line-height:1.7;color:var(--cream);opacity:0.9}
+.memory-dismiss{display:block;margin:1.25rem auto 0;background:none;border:1px solid var(--gold);color:var(--gold);padding:8px 28px;border-radius:4px;cursor:pointer;font-family:Georgia,serif;font-size:0.9rem}
+
+/* ===== TRANSITION OVERLAY ===== */
+#transitionOverlay{position:fixed;inset:0;z-index:150;background:#000;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.5s}
+#transitionOverlay.show{opacity:1;pointer-events:auto}
+#transitionText{color:var(--gold);font-family:Georgia,serif;font-style:italic;font-size:clamp(1rem,3vw,1.2rem);text-align:center}
+
+/* ===== INTERACTIVE HOTSPOT GLOW ===== */
+.hotspot{cursor:pointer;-webkit-tap-highlight-color:transparent;transition:filter 0.3s}
+@media(hover:hover){.hotspot:hover{filter:brightness(1.3) drop-shadow(0 0 8px rgba(201,168,76,0.5))}}
+.hotspot:active{filter:brightness(1.4)}
+.hotspot-pulse{animation:hPulse 2s ease-in-out infinite}
+@keyframes hPulse{0%,100%{filter:drop-shadow(0 0 4px rgba(201,168,76,0.2))}50%{filter:drop-shadow(0 0 12px rgba(201,168,76,0.5))}}
+
+/* ===== SCENE 1: DETECTIVE OFFICE ===== */
+.start-btn{background:rgba(201,168,76,0.15);border:2px solid var(--gold);color:var(--gold);padding:10px 28px;font-family:Georgia,serif;font-size:clamp(0.95rem,2.5vw,1.1rem);letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:all 0.3s;border-radius:2px;position:relative;z-index:5}
+.start-btn:active{background:rgba(201,168,76,0.3)}
+
+/* ===== SCENE 2: POTTERY ===== */
+.pottery-table{position:relative;background:rgba(20,15,10,0.85);border:1px solid rgba(201,168,76,0.2);border-radius:8px;padding:1rem;width:min(340px,92vw);margin-top:0.5rem;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.pottery-prompt{font-family:Georgia,serif;font-size:0.95rem;color:var(--gold-light);text-align:center;margin-bottom:0.75rem;font-style:italic;line-height:1.5}
+.pottery-grid{display:flex;gap:6px;justify-content:center;margin-bottom:0.75rem;flex-wrap:wrap}
+.shard{width:48px;height:48px;background:rgba(201,168,76,0.08);border:2px solid rgba(201,168,76,0.2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:Georgia,serif;font-size:clamp(1.3rem,4vw,1.6rem);font-weight:700;color:var(--gold);user-select:none;transition:all 0.3s}
+.shard.empty{border-style:dashed;background:rgba(201,168,76,0.03)}
+.shard.placed{background:rgba(201,168,76,0.2);border-color:var(--gold);border-style:solid}
+.letter-bank{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:0.5rem}
+.letter-tile{width:48px;height:48px;background:linear-gradient(135deg,#3a2010,#5a3420);border:1px solid rgba(201,168,76,0.4);border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:Georgia,serif;font-size:1.2rem;font-weight:700;color:var(--cream);cursor:pointer;-webkit-tap-highlight-color:transparent;user-select:none;transition:all 0.2s}
+.letter-tile:active{transform:scale(0.9)}
+.letter-tile.used{opacity:0.2;cursor:default}
+.pottery-word{font-family:Georgia,serif;font-size:1.4rem;color:var(--gold);text-align:center;letter-spacing:0.3em;min-height:2rem;margin-top:0.25rem}
+
+/* ===== SCENE 3: GYMKHANA (KARAOKE) ===== */
+.karaoke-panel{background:rgba(12,8,4,0.9);border:2px solid rgba(201,168,76,0.3);border-radius:10px;padding:1.5rem;width:min(360px,92vw);max-height:calc(100dvh - 200px);overflow-y:auto;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.karaoke-panel h3{color:var(--gold);text-align:center;font-size:1.15rem;margin-bottom:0.25rem;letter-spacing:0.04em}
+.karaoke-panel .karaoke-sub{color:var(--gold-light);text-align:center;font-size:0.85rem;font-style:italic;opacity:0.7;margin-bottom:1.25rem}
+.song-option{display:block;width:100%;background:rgba(201,168,76,0.06);border:2px solid rgba(201,168,76,0.2);border-radius:8px;padding:14px 16px;margin-bottom:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:all 0.25s;text-align:left;font-family:Georgia,serif;color:var(--cream);font-size:clamp(0.95rem,2.5vw,1.05rem)}
+.song-option:active{transform:scale(0.97)}
+@media(hover:hover){.song-option:hover{background:rgba(201,168,76,0.12);border-color:rgba(201,168,76,0.4)}}
+.song-option.correct-answer{background:rgba(201,168,76,0.25);border-color:var(--gold);color:var(--gold)}
+.song-option.wrong-answer{background:rgba(107,29,42,0.3);border-color:var(--burgundy-light)}
+.quip-toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(8,32,32,0.95);border:1px solid rgba(201,168,76,0.4);border-radius:8px;padding:12px 20px;font-family:Georgia,serif;font-size:0.9rem;color:var(--cream);max-width:320px;text-align:center;z-index:95;opacity:0;transition:opacity 0.3s;pointer-events:none;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.quip-toast.show{opacity:1}
+
+/* ===== SCENE 4: UNDERWATER ===== */
+.adventure-area{position:absolute;inset:0;bottom:0;cursor:crosshair}
+.hidden-item{position:absolute;width:48px;height:48px;display:flex;align-items:center;justify-content:center;opacity:0;transition:all 0.4s;cursor:pointer;-webkit-tap-highlight-color:transparent;border-radius:50%;z-index:5}
+.hidden-item.near{opacity:0.4;background:rgba(201,168,76,0.2)}
+.hidden-item.found{opacity:1;background:rgba(201,168,76,0.25);border:2px solid var(--gold);animation:invPop 0.5s ease}
+.found-counter{position:absolute;top:12px;right:12px;background:var(--hud-bg);border:1px solid rgba(201,168,76,0.3);border-radius:4px;padding:4px 10px;font-size:0.8rem;color:var(--gold);z-index:5}
+.magnify-circle{position:absolute;width:70px;height:70px;border:2px solid var(--gold);border-radius:50%;pointer-events:none;opacity:0;transition:opacity 0.15s;box-shadow:0 0 15px rgba(201,168,76,0.2),inset 0 0 15px rgba(201,168,76,0.08);z-index:10}
+
+/* ===== SCENE 5: DILLON (VW STYLE) ===== */
+.stage-area{position:relative;width:min(380px,92vw);margin-top:1rem;background:rgba(10,8,6,0.8);border-radius:10px;padding:1.25rem;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.stage-area .vw-header{font-family:'Futura','Helvetica Neue',Arial,sans-serif;font-size:0.75rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--cream);opacity:0.5;text-align:center;margin-bottom:0.75rem;border-bottom:1px solid rgba(245,237,214,0.15);padding-bottom:0.5rem}
+.word-slots{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;min-height:50px;padding:0.75rem;background:rgba(245,237,214,0.03);border:2px solid rgba(245,237,214,0.15);border-radius:4px;margin-bottom:0.75rem}
+.word-slot{font-family:'Futura','Helvetica Neue',Arial,sans-serif;font-size:clamp(0.95rem,2.5vw,1.05rem);color:var(--cream);padding:4px 10px;background:rgba(201,168,76,0.15);border-bottom:2px solid var(--cream);cursor:pointer;-webkit-tap-highlight-color:transparent;border-radius:0;transition:all 0.2s;letter-spacing:0.02em}
+.word-slot:active{transform:scale(0.9)}
+.word-bank{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.word-tile{font-family:'Futura','Helvetica Neue',Arial,sans-serif;font-size:clamp(0.9rem,2.5vw,1rem);color:var(--cream);background:rgba(245,237,214,0.08);border:1px solid rgba(245,237,214,0.2);padding:6px 12px;border-radius:2px;cursor:pointer;-webkit-tap-highlight-color:transparent;user-select:none;transition:all 0.2s;letter-spacing:0.02em}
+.word-tile:active{transform:scale(0.9)}
+.word-tile.used{opacity:0.2;cursor:default}
+
+/* ===== SCENE 6: VALENTINE ===== */
+.love-letter{background:linear-gradient(135deg,rgba(30,20,15,0.95),rgba(20,12,8,0.95));border:1px solid rgba(201,168,76,0.3);border-radius:6px;padding:clamp(1.25rem,4vw,2rem);max-width:420px;width:92%;max-height:calc(100dvh - 120px);overflow-y:auto;position:relative}
+.love-letter::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--burgundy),var(--gold),var(--burgundy));border-radius:6px 6px 0 0}
+.love-letter p{text-align:left;margin-bottom:0.85rem;font-size:clamp(0.95rem,2.6vw,1.05rem);line-height:1.75;color:var(--cream);opacity:0;transform:translateY(8px);transition:opacity 0.6s,transform 0.6s}
+.love-letter p.visible{opacity:1;transform:translateY(0)}
+.love-letter .signoff{font-style:italic;font-size:1.2rem;color:var(--gold);text-align:right;margin-top:1.5rem;opacity:0;transform:translateY(8px);transition:opacity 0.6s,transform 0.6s}
+.love-letter .signoff.visible{opacity:1;transform:translateY(0)}
+
+/* Hearts & confetti */
+.hearts-container{position:fixed;inset:0;pointer-events:none;z-index:50;overflow:hidden}
+.falling-heart{position:absolute;top:-30px;color:var(--burgundy-light);opacity:0;animation:fallH linear forwards}
+@keyframes fallH{0%{opacity:0;transform:translateY(0) rotate(0deg)}10%{opacity:0.5}90%{opacity:0.3}100%{opacity:0;transform:translateY(100dvh) rotate(360deg)}}
+.confetti-piece{position:absolute;top:-10px;opacity:0;animation:confF linear forwards}
+@keyframes confF{0%{opacity:0;transform:translateY(0) rotate(0) scale(1)}10%{opacity:0.7}80%{opacity:0.5}100%{opacity:0;transform:translateY(100dvh) rotate(720deg) scale(0.5)}}
+
+/* ===== SUCCESS MSG ===== */
+.success-msg{font-family:Georgia,serif;font-size:clamp(1rem,2.8vw,1.15rem);color:var(--gold);text-align:center;margin-top:0.75rem;opacity:0;transition:opacity 0.5s}
+.success-msg.visible{opacity:1}
+.next-btn{background:rgba(201,168,76,0.12);border:1px solid var(--gold);color:var(--gold);padding:8px 24px;font-family:Georgia,serif;font-size:0.95rem;letter-spacing:0.05em;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:all 0.3s;border-radius:2px;margin-top:0.75rem;display:none}
+.next-btn:active{background:rgba(201,168,76,0.25)}
+</style>
+</head>
+<body>
+<div id="game">
+
+<!-- ========== SCENE 1: DETECTIVE'S OFFICE ========== -->
+<div id="scene1" class="scene active">
+<div class="scene-bg"></div>
+<div class="scene-content" style="justify-content:flex-end;padding-bottom:1rem">
+  <button class="start-btn hotspot hotspot-pulse" id="beginBtn" onclick="beginCase()">Open Case File</button>
+</div>
+</div>
+
+<!-- ========== SCENE 2: POTTERY STUDIO (TWO-PART PUZZLE) ========== -->
+<div id="scene2" class="scene">
+<div class="scene-bg"></div>
+<div class="scene-content" style="justify-content:flex-end;padding-bottom:0.5rem">
+  <div class="pottery-table" id="potteryTable">
+    <div class="pottery-prompt" id="potteryPrompt"></div>
+    <div class="pottery-grid" id="potteryGrid"></div>
+    <div class="pottery-word" id="potteryWord"></div>
+    <div class="letter-bank" id="letterBank"></div>
+  </div>
+  <div class="success-msg" id="potterySuccess"></div>
+  <button class="next-btn" id="potteryNext" onclick="goToScene(3,'Traveling to London...')">Next Location &rarr;</button>
+</div>
+</div>
+
+<!-- ========== SCENE 3: GYMKHANA LONDON (KARAOKE) ========== -->
+<div id="scene3" class="scene">
+<div class="scene-bg"></div>
+<div class="scene-content" style="justify-content:center">
+  <div class="karaoke-panel" id="karaokePanel">
+    <h3>Karaoke Night</h3>
+    <div class="karaoke-sub" id="karaokeSub"></div>
+    <div id="songOptions"></div>
+  </div>
+  <div class="success-msg" id="karaokeSuccess"></div>
+  <button class="next-btn" id="karaokeNext" onclick="goToScene(4,'Traveling to Thailand...')">Next Location &rarr;</button>
+</div>
+<div class="quip-toast" id="quipToast"></div>
+</div>
+
+<!-- ========== SCENE 4: KOH TAO UNDERWATER (6 HIDDEN OBJECTS) ========== -->
+<div id="scene4" class="scene">
+<div class="scene-bg"></div>
+<div class="adventure-area" id="adventureScene" ontouchmove="handleSceneTouch(event)" onmousemove="handleSceneMouse(event)">
+  <div class="found-counter" id="foundCounter">Evidence: 0 / 6</div>
+  <!-- Hidden items positioned across the underwater scene -->
+  <div class="hidden-item" id="item-cuttlefish" data-name="Cuttlefish" data-idx="0" style="top:25%;left:20%;" onclick="findItem(this)">
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><ellipse cx="14" cy="12" rx="10" ry="7" fill="#c9a84c" opacity="0.8"/><circle cx="10" cy="11" r="2" fill="#2c1810"/><circle cx="18" cy="11" r="2" fill="#2c1810"/><path d="M6,17 Q8,22 10,18 Q12,22 14,18 Q16,22 18,18 Q20,22 22,17" stroke="#c9a84c" stroke-width="1.5" fill="none" opacity="0.7"/></svg>
+  </div>
+  <div class="hidden-item" id="item-manta-ray" data-name="Little Manta Ray" data-idx="1" style="top:15%;right:25%;" onclick="findItem(this)">
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><path d="M14,8 Q6,4 2,12 Q6,10 14,14 Q22,10 26,12 Q22,4 14,8Z" fill="#c9a84c" opacity="0.8"/><path d="M14,14 L14,22" stroke="#c9a84c" stroke-width="1.5"/><circle cx="11" cy="10" r="1" fill="#2c1810"/><circle cx="17" cy="10" r="1" fill="#2c1810"/></svg>
+  </div>
+  <div class="hidden-item" id="item-trigger-fish" data-name="Trigger Fish" data-idx="2" style="top:55%;left:60%;" onclick="findItem(this)">
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><ellipse cx="14" cy="14" rx="10" ry="6" fill="#c9a84c" opacity="0.8"/><polygon points="24,14 28,10 28,18" fill="#c9a84c" opacity="0.6"/><polygon points="14,8 16,4 18,8" fill="#c9a84c" opacity="0.7"/><circle cx="8" cy="13" r="1.5" fill="#2c1810"/><path d="M6,15 Q7,17 9,16" stroke="#2c1810" stroke-width="0.8" fill="none"/></svg>
+  </div>
+  <div class="hidden-item" id="item-big-tuna" data-name="Big Tuna" data-idx="3" style="top:40%;left:35%;" onclick="findItem(this)">
+    <svg width="32" height="28" viewBox="0 0 32 28" fill="none"><ellipse cx="16" cy="14" rx="13" ry="7" fill="#c9a84c" opacity="0.8"/><polygon points="29,14 32,8 32,20" fill="#c9a84c" opacity="0.6"/><circle cx="7" cy="13" r="2" fill="#2c1810"/><line x1="4" y1="14" x2="2" y2="14" stroke="#c9a84c" stroke-width="1" opacity="0.5"/></svg>
+  </div>
+  <div class="hidden-item" id="item-british-diver" data-name="British Diver" data-idx="4" style="bottom:25%;right:15%;" onclick="findItem(this)">
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="10" r="6" fill="#c9a84c" opacity="0.7"/><rect x="6" y="7" width="16" height="7" rx="3" fill="none" stroke="#c9a84c" stroke-width="1.5" opacity="0.8"/><circle cx="10" cy="10" r="2.5" fill="none" stroke="#f5edd6" stroke-width="1"/><circle cx="18" cy="10" r="2.5" fill="none" stroke="#f5edd6" stroke-width="1"/><rect x="11" y="16" width="6" height="8" rx="1" fill="#c9a84c" opacity="0.5"/><path d="M10,26 L12,20 M18,26 L16,20" stroke="#c9a84c" stroke-width="1.5" opacity="0.5"/></svg>
+  </div>
+  <div class="hidden-item" id="item-sea-urchins" data-name="Sea Urchins" data-idx="5" style="bottom:15%;left:45%;" onclick="findItem(this)">
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="6" fill="#c9a84c" opacity="0.7"/><line x1="14" y1="2" x2="14" y2="8" stroke="#c9a84c" stroke-width="1.2"/><line x1="14" y1="20" x2="14" y2="26" stroke="#c9a84c" stroke-width="1.2"/><line x1="2" y1="14" x2="8" y2="14" stroke="#c9a84c" stroke-width="1.2"/><line x1="20" y1="14" x2="26" y2="14" stroke="#c9a84c" stroke-width="1.2"/><line x1="6" y1="6" x2="10" y2="10" stroke="#c9a84c" stroke-width="1"/><line x1="18" y1="18" x2="22" y2="22" stroke="#c9a84c" stroke-width="1"/><line x1="22" y1="6" x2="18" y2="10" stroke="#c9a84c" stroke-width="1"/><line x1="6" y1="22" x2="10" y2="18" stroke="#c9a84c" stroke-width="1"/></svg>
+  </div>
+  <div class="magnify-circle" id="magnifyCircle"></div>
+</div>
+<div style="position:absolute;bottom:68px;left:0;right:0;z-index:10;text-align:center;padding:0 1rem">
+  <div class="success-msg" id="adventureSuccess">All evidence collected. The dive log is complete.</div>
+  <button class="next-btn" id="adventureNext" onclick="goToScene(5,'Heading to the amphitheater...')">Next Location &rarr;</button>
+</div>
+</div>
+
+<!-- ========== SCENE 5: DILLON AMPHITHEATER (WORD PUZZLE, VW STYLE) ========== -->
+<div id="scene5" class="scene">
+<div class="scene-bg"></div>
+<div class="scene-content" style="justify-content:center">
+  <div class="stage-area">
+    <div class="vw-header">Vampire Weekend &mdash; Dillon Amphitheater</div>
+    <div class="word-slots" id="wordSlots"></div>
+    <div class="word-bank" id="wordBank"></div>
+  </div>
+  <div class="success-msg" id="concertSuccess"></div>
+  <button class="next-btn" id="concertNext" onclick="goToScene(6,'Solving the mystery...')">Solve the Mystery &rarr;</button>
+</div>
+</div>
+
+<!-- ========== SCENE 6: VALENTINE'S ROOM ========== -->
+<div id="scene6" class="scene">
+<div class="scene-bg"></div>
+<div class="scene-content" style="justify-content:center">
+  <div class="love-letter" id="loveLetter"></div>
+</div>
+<div class="hearts-container" id="heartsContainer"></div>
+</div>
+
+<!-- ========== HUD BAR ========== -->
+<div id="hud">
+  <div class="hud-btn" onclick="toggleJournal()" title="Journal">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#c9a84c" stroke-width="1.5"><rect x="4" y="3" width="16" height="18" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/></svg>
+  </div>
+  <div id="inventory">
+    <!-- Slot 0: Coffee cup -->
+    <div class="inv-slot" id="inv0"><svg viewBox="0 0 24 24" fill="none"><rect x="5" y="8" width="11" height="10" rx="2" stroke="#c9a84c" stroke-width="1.5"/><path d="M16,10 Q20,10 20,14 Q20,18 16,18" stroke="#c9a84c" stroke-width="1.5" fill="none"/><path d="M8,8 Q9,5 10,8" stroke="#c9a84c" stroke-width="1" opacity="0.5"/><path d="M11,7 Q12,4 13,7" stroke="#c9a84c" stroke-width="1" opacity="0.5"/></svg></div>
+    <!-- Slot 1: Microphone -->
+    <div class="inv-slot" id="inv1"><svg viewBox="0 0 24 24" fill="none"><rect x="9" y="4" width="6" height="10" rx="3" stroke="#c9a84c" stroke-width="1.5"/><path d="M6,12 Q6,17 12,17 Q18,17 18,12" stroke="#c9a84c" stroke-width="1.5" fill="none"/><line x1="12" y1="17" x2="12" y2="21" stroke="#c9a84c" stroke-width="1.5"/><line x1="8" y1="21" x2="16" y2="21" stroke="#c9a84c" stroke-width="1.5"/></svg></div>
+    <!-- Slot 2: Diving mask -->
+    <div class="inv-slot" id="inv2"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="8" width="18" height="9" rx="4" stroke="#c9a84c" stroke-width="1.5"/><circle cx="9" cy="12" r="3.5" stroke="#c9a84c" stroke-width="1"/><circle cx="15" cy="12" r="3.5" stroke="#c9a84c" stroke-width="1"/><line x1="12" y1="10" x2="12" y2="14" stroke="#c9a84c" stroke-width="1"/><path d="M3,11 L1,9" stroke="#c9a84c" stroke-width="1.5"/></svg></div>
+    <!-- Slot 3: Music note -->
+    <div class="inv-slot" id="inv3"><svg viewBox="0 0 24 24" fill="none"><circle cx="8" cy="18" r="3" fill="#c9a84c"/><line x1="11" y1="18" x2="11" y2="5" stroke="#c9a84c" stroke-width="1.5"/><path d="M11,5 Q16,3 18,7" stroke="#c9a84c" stroke-width="1.5" fill="none"/></svg></div>
+  </div>
+  <div class="hud-btn" onclick="togglePhone()" title="Phone">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#c9a84c" stroke-width="1.5"><rect x="6" y="3" width="12" height="18" rx="2"/><line x1="10" y1="18" x2="14" y2="18"/></svg>
+  </div>
+</div>
+
+<!-- ========== DIALOG BOX ========== -->
+<div id="dialogOverlay">
+  <div id="dialogBox" onclick="advanceDialog()">
+    <div id="dialogIcon"><svg viewBox="0 0 24 24" fill="none" stroke="#c9a84c" stroke-width="1.5"><circle cx="11" cy="11" r="6"/><line x1="15.5" y1="15.5" x2="20" y2="20" stroke-linecap="round"/></svg></div>
+    <div id="dialogText"></div>
+    <div class="dialog-continue">tap to continue</div>
+  </div>
+</div>
+
+<!-- ========== TRANSITION OVERLAY ========== -->
+<div id="transitionOverlay"><div id="transitionText"></div></div>
+
+<!-- ========== JOURNAL POPUP ========== -->
+<div id="journalPopup" onclick="if(event.target===this)toggleJournal()">
+  <div class="journal-content">
+    <h3>Case Notes</h3>
+    <div id="journalEntries"></div>
+    <button class="journal-close" onclick="toggleJournal()">Close</button>
+  </div>
+</div>
+
+<!-- ========== PHONE POPUP ========== -->
+<div id="phonePopup" onclick="if(event.target===this)togglePhone()">
+  <div class="phone-content">
+    <div class="notif">1 new message</div>
+    <div class="msg" id="phoneSender" style="color:var(--gold);font-weight:700">Sam</div>
+    <div class="msg" id="phoneMsg" style="font-size:0.9rem;opacity:0.7"></div>
+    <button class="phone-close" onclick="togglePhone()">Close</button>
+  </div>
+</div>
+
+<!-- ========== MEMORY NOTE POPUP ========== -->
+<div id="memoryPopup" onclick="if(event.target===this)dismissMemory()">
+  <div class="memory-content">
+    <div class="memory-vignette" id="memoryVignette"></div>
+    <div class="memory-text-area">
+      <div class="memory-title" id="memoryTitle"></div>
+      <div class="memory-body" id="memoryBody"></div>
+      <button class="memory-dismiss" onclick="dismissMemory()">Continue</button>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script>
+// ==================== CONTENT DATA ====================
+const CONTENT = {
+  scene1: {
+    dialog: [
+      {speaker:"narrator",text:"A new case file lands on your desk. The label reads: VALENTINE'S DAY - CLASSIFIED."},
+      {speaker:"narrator",text:"You open it. Inside, a note:"},
+      {speaker:"casefile",text:"Carter, something's been stolen. Five of our best memories have gone missing, scattered across the places that matter most to us. I need you to find them. Follow the clues. Trust your instincts. You've always been the smarter one anyway."},
+      {speaker:"casefile",text:"-- Sam"},
+      {speaker:"narrator",text:"Pinned to the note: a photo of a pottery studio, a plane ticket stub, a dive log, a concert wristband, and a faded Polaroid of mountains at sunset."},
+      {speaker:"narrator",text:"Your journal is open. Your phone is charged. Let's get to work, detective."}
+    ]
+  },
+  scene2: {
+    dialog: [
+      {speaker:"narrator",text:"The first clue leads to a pottery studio in Denver. CITY MUD. The air smells like wet clay and coffee grounds."},
+      {speaker:"narrator",text:"Someone left a half-finished mug on the wheel. There's a note tucked inside it."},
+      {speaker:"note",text:"This is where it started. I saw you across the studio in overalls, hands covered in slip, and thought: okay, she's trouble. The good kind. I needed an excuse to keep talking to you. So I came up with one."},
+      {speaker:"narrator",text:"Two locks guard the memory hidden here. Crack them both."}
+    ],
+    puzzle_part1_prompt:"What drink did Sam use as an excuse to keep hanging out after class?",
+    puzzle_part1_answer:"ICEDCOFFEE",
+    puzzle_part1_display:"ICED COFFEE",
+    puzzle_part2_prompt:"Where did you two first hang out outside the studio?",
+    puzzle_part2_answer:"SLOOP",
+    puzzle_part2_display:"SLOOP",
+    success_dialog:[{speaker:"narrator",text:"The locks click open. A memory surfaces, warm and specific, like clay still holding the shape of someone's hands."}],
+    memory_note:{
+      title:"Sam's Memory: City Mud",
+      text:"You were in overalls and your hands were a mess and we ended up at the sink next to each other talking about Paul Simon of all things. And I remember thinking, I need to not let this conversation end. So I asked if you wanted to grab an iced coffee. Which, for the record, I don't even really drink iced coffee that often. I just needed a reason to keep standing near you. We ended up at Sloop and talked for like two hours and I drove home thinking: yeah, I'm in trouble."
+    },
+    phone_message:"Hope you're having fun playing detective. This first one's easy. It only gets harder from here cc"
+  },
+  scene3: {
+    dialog: [
+      {speaker:"narrator",text:"The next clue takes you across the Atlantic. London. A football stadium, an incredible restaurant, and a pub with a stage."},
+      {speaker:"narrator",text:"On the table at Gymkhana, someone's left a menu with a question circled in pen."},
+      {speaker:"note",text:"London was a gamble. Early days. Lots of time together with nowhere to hide. But we crushed it. We traveled well together. We ate incredible food. We watched the Jags lose and didn't care. And then we found a karaoke bar and sang until we physically could not keep our eyes open."},
+      {speaker:"narrator",text:"One of those songs mattered more than the others. Which one?"}
+    ],
+    puzzle_prompt:"What song did you two absolutely destroy at karaoke that night?",
+    options: [
+      {song:"Mr. Brightside - The Killers",correct:true,quip:null},
+      {song:"Don't Stop Believin' - Journey",correct:false,quip:"Classic, but no. We have more edge than that. Barely. But still."},
+      {song:"Livin' on a Prayer - Bon Jovi",correct:false,quip:"I mean, we probably did this one too. But it's not THE one."},
+      {song:"Sweet Caroline - Neil Diamond",correct:false,quip:"Babe. I'm from Boston. I've been permanently banned from singing this in public."}
+    ],
+    success_dialog:[{speaker:"narrator",text:"The opening synth hits and the memory comes flooding back. Two people, deliriously tired, screaming into microphones like their lives depended on it."}],
+    memory_note:{
+      title:"Sam's Memory: London",
+      text:"London was a big swing. We were still pretty new and I basically said hey, want to fly to another country together and spend a week joined at the hip? Could've been a disaster. Instead it was one of my favorite trips ever. The food at Gymkhana was insane. We watched the Jags play the Pats and I pretended to care about the right team for you. We sang at the pubs until we were deliriously exhausted and my voice was gone and I still didn't want the night to end. I remember thinking: okay, we travel well together. That matters."
+    },
+    phone_message:"Fun fact I still can't hear Mr. Brightside without thinking of you trying to hit that high note. Iconic honestly"
+  },
+  scene4: {
+    dialog: [
+      {speaker:"narrator",text:"The trail leads to Thailand. Koh Tao. Warm water. Sunlight cutting through the surface in shafts."},
+      {speaker:"narrator",text:"A dive log is open on the boat. The entry reads:"},
+      {speaker:"note",text:"It was like another planet down there. Except you were there too, which made it better than any planet."},
+      {speaker:"narrator",text:"The reef is alive with creatures. Find all six things Sam remembers from the dive."}
+    ],
+    hidden_objects: [
+      {id:"cuttlefish",name:"Cuttlefish",found_text:"This guy owned the place. Just floating there, shifting colors, like he paid rent and we were the tourists. Which, fair."},
+      {id:"manta-ray",name:"Little Manta Ray",found_text:"Glided right past us like we weren't even there. Very main character energy."},
+      {id:"trigger-fish",name:"Trigger Fish",found_text:"This one looked personally offended that we were in its neighborhood. Gave us the dirtiest look a fish can give."},
+      {id:"big-tuna",name:"Big Tuna",found_text:"Absolutely massive. Just cruising. No thoughts, just vibes. Respect."},
+      {id:"british-diver",name:"British Diver",found_text:"Random British guy who gave us a big thumbs up underwater. Legend. Hope he's doing well."},
+      {id:"sea-urchins",name:"Sea Urchins",found_text:"These were EVERYWHERE. Like, aggressively everywhere. Nature's caltrops."}
+    ],
+    success_dialog:[{speaker:"narrator",text:"All six found. The dive log entry completes itself, ink spreading across the page like watercolor."}],
+    memory_note:{
+      title:"Sam's Memory: Koh Tao",
+      text:"Diving with you was unreal. There was a cuttlefish just hovering there like it owned the whole reef. A trigger fish that looked personally annoyed we existed. This enormous tuna that had absolutely zero concern about anything. A random British diver who gave us the biggest thumbs up I've ever seen. Sea urchins literally everywhere, like the ocean's version of stepping on a Lego. And through all of it, you were right there next to me, and I kept thinking: this is like another planet. Except you're here too. So it's better."
+    },
+    phone_message:"They swam right over us remember?? Still think about that cuttlefish honestly. He was just vibing"
+  },
+  scene5: {
+    dialog: [
+      {speaker:"narrator",text:"The final clue brings you home. Colorado. Dillon Amphitheater. The sun is going down behind the mountains and the lake is catching the last of the light."},
+      {speaker:"narrator",text:"Vampire Weekend is playing. The air is warm and the crowd is swaying and someone left a note folded under your seat."},
+      {speaker:"note",text:"This is the night I knew. Not 'liked you' knew. Really knew. The sun was doing that thing behind the mountains and you were standing there and I just thought: yeah. This one's different."},
+      {speaker:"narrator",text:"Carter once wrote Sam something that stuck with him. Her words are scattered. Put them back together."}
+    ],
+    target_phrase:["I","think","we","make","a","great","team"],
+    extra_words:["always","never","the","best"],
+    success_dialog:[
+      {speaker:"narrator",text:"The words fall into place. Seven words. Simple. True. The kind of thing that only gets more right over time."},
+      {speaker:"narrator",text:"\"I think we make a great team.\""}
+    ],
+    memory_note:{
+      title:"Sam's Memory: Dillon",
+      text:"The sun was setting behind the mountains and the lake was right there and Vampire Weekend was playing and you were standing next to me and I just had this moment. This really clear, calm moment where I thought: I really, really like this person. Not in the butterflies way. In the quiet, sure way. You said once that Vampire Weekend felt like it was last week and forever ago at the same time. That's kind of how all of this feels. Like I've known you forever and also like I can't believe I get to keep doing this."
+    },
+    phone_message:"Almost there detective. One more stop. You're gonna want to sit down for this one"
+  },
+  scene6: {
+    love_letter_paragraphs: [
+      "Carter,",
+      "I've been trying to figure out how to say this and I keep overcomplicating it. So I'm just going to talk.",
+      "You walked into a pottery studio and I asked you to get iced coffee and honestly that's the best decision I've ever made. Including moving to Colorado. Including every job I've taken. Iced coffee with you at Sloop. That's the one.",
+      "And then London happened and I learned that we travel well together, which is a thing I didn't know mattered until it did. We ate at Gymkhana and screamed Mr. Brightside at a pub and I lost my voice and didn't care. I watched the Jags play for you. That's love, Carter. That's real love.",
+      "Thailand was another planet. Diving next to you, seeing that cuttlefish just floating there like he owned the place, the trigger fish that wanted us dead, that enormous tuna. Sea urchins everywhere. And through all of it I kept looking over at you and thinking: how did I get here?",
+      "And then there was Dillon. Vampire Weekend. Sun going down. Lake right there. And I just knew. Not in a dramatic way. In a quiet way. The kind of knowing that doesn't need to announce itself because it's not going anywhere.",
+      "You said you think we make a great team. I think about that a lot. You said it feels like Vampire Weekend was last week and forever ago at the same time. That's exactly right. You said you love doing everything and nothing with me and everything in between. Same.",
+      "You challenge me in the best way. You make me laugh constantly. You make me want to be better at things. You're competitive about volleyball and you have strong opinions about Love Island and you'll walk 30 minutes to a cafe at 4:30 in the morning in a foreign country because you're brave like that. I love all of it.",
+      "I feel incredibly lucky. Not in the cheesy way. In the way where I genuinely cannot believe this is my life and you're in it and we get to keep doing this. I really, really like you. And I really, really love you.",
+      "Happy Valentine's Day, cc."
+    ],
+    signoff:"xo, Sam",
+    phone_message:"I love you tons. Happy Valentine's Day babe"
+  },
+  journal_notes: [
+    {label:"City Mud Studio",hint:"Two locks, two memories. What drink? What place?",solved:"Unlocked: Iced coffee was just an excuse. Sloop was just the beginning."},
+    {label:"Gymkhana London",hint:"Name the song that brought the house down.",solved:"Unlocked: Mr. Brightside, screamed until deliriously exhausted."},
+    {label:"Koh Tao Dive",hint:"Six creatures (and one legend) hide in the reef.",solved:"Unlocked: Another planet, except she was there too."},
+    {label:"Dillon Amphitheater",hint:"Her words are scattered. Put them back together.",solved:"Unlocked: I think we make a great team."}
+  ]
+};
+
+// ==================== STATE ====================
+let currentScene = 1;
+const totalScenes = 6;
+let dialogQueue = [];
+let dialogCallback = null;
+const cluesSolved = [false,false,false,false]; // pottery, gymkhana, underwater, dillon
+let memoryCallback = null;
+
+// ==================== DIALOG SYSTEM ====================
+function showDialog(lines, cb) {
+  dialogQueue = Array.isArray(lines) ? [...lines] : [lines];
+  dialogCallback = cb || null;
+  showNextLine();
+}
+function showNextLine() {
+  if (!dialogQueue.length) {
+    document.getElementById('dialogBox').classList.remove('show');
+    if (dialogCallback) { const cb = dialogCallback; dialogCallback = null; cb(); }
+    return;
+  }
+  const line = dialogQueue.shift();
+  const box = document.getElementById('dialogBox');
+  const text = document.getElementById('dialogText');
+  if (typeof line === 'object') {
+    text.innerHTML = '<span class="speaker">' + line.speaker + '</span>' + line.text;
+  } else {
+    text.innerHTML = line;
+  }
+  box.classList.add('show');
+}
+function advanceDialog() {
+  showNextLine();
+}
+
+// ==================== SCENE MANAGEMENT ====================
+function goToScene(n, transText) {
+  const overlay = document.getElementById('transitionOverlay');
+  const tText = document.getElementById('transitionText');
+  tText.textContent = transText || 'Loading...';
+  overlay.classList.add('show');
+  setTimeout(() => {
+    document.getElementById('scene' + currentScene).classList.remove('active');
+    document.getElementById('scene' + n).classList.add('active');
+    currentScene = n;
+    setTimeout(() => {
+      overlay.classList.remove('show');
+      if (n === 2) initPottery();
+      if (n === 3) initKaraoke();
+      if (n === 4) initAdventure();
+      if (n === 5) initConcert();
+      if (n === 6) initLoveLetter();
+    }, 400);
+  }, 800);
+}
+
+function beginCase() {
+  showDialog(CONTENT.scene1.dialog, () => {
+    goToScene(2, 'Traveling to the pottery studio...');
+  });
+}
+
+// ==================== INVENTORY ====================
+function addInventoryItem(index) {
+  cluesSolved[index] = true;
+  document.getElementById('inv' + index).classList.add('filled');
+}
+
+// ==================== JOURNAL ====================
+function toggleJournal() {
+  const popup = document.getElementById('journalPopup');
+  popup.classList.toggle('show');
+  if (popup.classList.contains('show')) {
+    const entries = document.getElementById('journalEntries');
+    entries.innerHTML = '';
+    CONTENT.journal_notes.forEach((n, i) => {
+      const div = document.createElement('div');
+      div.className = 'journal-entry' + (cluesSolved[i] ? '' : ' unsolved');
+      div.innerHTML = '<strong>' + n.label + '</strong><br>' + (cluesSolved[i] ? n.solved : n.hint);
+      entries.appendChild(div);
+    });
+  }
+}
+
+// ==================== PHONE (CONTEXT-SENSITIVE) ====================
+function togglePhone() {
+  const popup = document.getElementById('phonePopup');
+  popup.classList.toggle('show');
+  if (popup.classList.contains('show')) {
+    updatePhoneMessage();
+  }
+}
+function updatePhoneMessage() {
+  const sceneKey = 'scene' + currentScene;
+  const data = CONTENT[sceneKey];
+  const msgEl = document.getElementById('phoneMsg');
+  if (data && data.phone_message) {
+    msgEl.textContent = '"' + data.phone_message + '"';
+  } else {
+    msgEl.textContent = '"Hey detective, how\'s the case going? Miss you."';
+  }
+}
+
+// ==================== MEMORY NOTE POPUP ====================
+const MEMORY_IMAGES = {
+  2: 'assets/memory-pottery.jpg',
+  3: 'assets/memory-london.jpg',
+  4: 'assets/memory-underwater.jpg',
+  5: 'assets/memory-dillon.jpg'
+};
+
+function showMemoryNote(memoryData, sceneNum, cb) {
+  const popup = document.getElementById('memoryPopup');
+  const title = document.getElementById('memoryTitle');
+  const body = document.getElementById('memoryBody');
+  const vignette = document.getElementById('memoryVignette');
+
+  title.textContent = memoryData.title;
+  body.textContent = memoryData.text;
+
+  // Try loading vignette image
+  const imgPath = MEMORY_IMAGES[sceneNum] || '';
+  const testImg = new Image();
+  testImg.onload = function() {
+    vignette.style.backgroundImage = 'url(' + imgPath + ')';
+    vignette.classList.add('has-image');
+  };
+  testImg.onerror = function() {
+    vignette.classList.remove('has-image');
+    vignette.style.backgroundImage = '';
+  };
+  testImg.src = imgPath;
+
+  memoryCallback = cb || null;
+  popup.classList.add('show');
+}
+function dismissMemory() {
+  const popup = document.getElementById('memoryPopup');
+  popup.classList.remove('show');
+  if (memoryCallback) { const cb = memoryCallback; memoryCallback = null; cb(); }
+}
+
+// ==================== SCENE 2: POTTERY (TWO-PART PUZZLE) ====================
+let potteryPart = 1;
+let potteryIndex = 0;
+let potteryInited = false;
+let currentPotteryAnswer = '';
+
+function initPottery() {
+  if (potteryInited) return;
+  potteryInited = true;
+  showDialog(CONTENT.scene2.dialog, () => {
+    setupPotteryPart(1);
+  });
+}
+
+function setupPotteryPart(part) {
+  potteryPart = part;
+  potteryIndex = 0;
+  const prompt = document.getElementById('potteryPrompt');
+  const grid = document.getElementById('potteryGrid');
+  const bank = document.getElementById('letterBank');
+  const word = document.getElementById('potteryWord');
+  grid.innerHTML = '';
+  bank.innerHTML = '';
+  word.textContent = '';
+
+  if (part === 1) {
+    currentPotteryAnswer = CONTENT.scene2.puzzle_part1_answer;
+    prompt.textContent = CONTENT.scene2.puzzle_part1_prompt;
+    const decoys = ['F','H','D','A','P','W'];
+    const answerLetters = currentPotteryAnswer.split('');
+    for (let i = 0; i < answerLetters.length; i++) {
+      const shard = document.createElement('div');
+      shard.className = 'shard empty';
+      shard.id = 'slot-' + i;
+      grid.appendChild(shard);
+    }
+    const allLetters = [...answerLetters, ...decoys];
+    shuffle(allLetters);
+    allLetters.forEach(letter => {
+      const tile = document.createElement('div');
+      tile.className = 'letter-tile';
+      tile.textContent = letter;
+      tile.onclick = () => pickLetter(tile, letter);
+      bank.appendChild(tile);
+    });
+  } else {
+    currentPotteryAnswer = CONTENT.scene2.puzzle_part2_answer;
+    prompt.textContent = CONTENT.scene2.puzzle_part2_prompt;
+    const decoys = ['A','T','W','R'];
+    const answerLetters = currentPotteryAnswer.split('');
+    for (let i = 0; i < answerLetters.length; i++) {
+      const shard = document.createElement('div');
+      shard.className = 'shard empty';
+      shard.id = 'slot-' + i;
+      grid.appendChild(shard);
+    }
+    const allLetters = [...answerLetters, ...decoys];
+    shuffle(allLetters);
+    allLetters.forEach(letter => {
+      const tile = document.createElement('div');
+      tile.className = 'letter-tile';
+      tile.textContent = letter;
+      tile.onclick = () => pickLetter(tile, letter);
+      bank.appendChild(tile);
+    });
+  }
+}
+
+function pickLetter(tile, letter) {
+  if (tile.classList.contains('used') || potteryIndex >= currentPotteryAnswer.length) return;
+  if (letter === currentPotteryAnswer[potteryIndex]) {
+    tile.classList.add('used');
+    const slot = document.getElementById('slot-' + potteryIndex);
+    slot.textContent = letter;
+    slot.classList.remove('empty');
+    slot.classList.add('placed');
+    potteryIndex++;
+
+    // Update display word
+    const display = potteryPart === 1 ? CONTENT.scene2.puzzle_part1_display : CONTENT.scene2.puzzle_part2_display;
+    const progress = display.substring(0, potteryIndex + (potteryPart === 1 ? (potteryIndex >= 4 ? 1 : 0) : 0));
+    document.getElementById('potteryWord').textContent = currentPotteryAnswer.substring(0, potteryIndex);
+
+    if (potteryIndex === currentPotteryAnswer.length) {
+      // Show the display version
+      document.getElementById('potteryWord').textContent = potteryPart === 1 ? CONTENT.scene2.puzzle_part1_display : CONTENT.scene2.puzzle_part2_display;
+
+      if (potteryPart === 1) {
+        setTimeout(() => {
+          showDialog([{speaker:'Lock 1', text:'Unlocked: ' + CONTENT.scene2.puzzle_part1_display + '. One more lock to go.'}], () => {
+            setupPotteryPart(2);
+          });
+        }, 400);
+      } else {
+        setTimeout(() => {
+          showDialog(CONTENT.scene2.success_dialog, () => {
+            addInventoryItem(0);
+            showMemoryNote(CONTENT.scene2.memory_note, 2, () => {
+              document.getElementById('potterySuccess').textContent = 'Memory recovered. The investigation continues.';
+              document.getElementById('potterySuccess').classList.add('visible');
+              document.getElementById('potteryNext').style.display = 'inline-block';
+            });
+          });
+        }, 400);
+      }
+    }
+  } else {
+    tile.style.transform = 'translateX(-4px)';
+    setTimeout(() => tile.style.transform = 'translateX(4px)', 80);
+    setTimeout(() => tile.style.transform = '', 160);
+  }
+}
+
+// ==================== SCENE 3: GYMKHANA KARAOKE ====================
+let karaokeInited = false;
+let karaokeSolved = false;
+
+function initKaraoke() {
+  if (karaokeInited) return;
+  karaokeInited = true;
+  showDialog(CONTENT.scene3.dialog, () => {
+    const sub = document.getElementById('karaokeSub');
+    sub.textContent = CONTENT.scene3.puzzle_prompt;
+    const container = document.getElementById('songOptions');
+    container.innerHTML = '';
+    // Shuffle options for variety
+    const options = [...CONTENT.scene3.options];
+    shuffle(options);
+    options.forEach(opt => {
+      const btn = document.createElement('button');
+      btn.className = 'song-option';
+      btn.textContent = opt.song;
+      btn.onclick = () => pickSong(btn, opt);
+      container.appendChild(btn);
+    });
+  });
+}
+
+function pickSong(btn, opt) {
+  if (karaokeSolved) return;
+  if (opt.correct) {
+    karaokeSolved = true;
+    btn.classList.add('correct-answer');
+    // Disable other buttons
+    document.querySelectorAll('.song-option').forEach(b => { if (b !== btn) b.style.opacity = '0.3'; });
+    setTimeout(() => {
+      showDialog(CONTENT.scene3.success_dialog, () => {
+        addInventoryItem(1);
+        showMemoryNote(CONTENT.scene3.memory_note, 3, () => {
+          document.getElementById('karaokeSuccess').textContent = 'Memory recovered. The trail leads east.';
+          document.getElementById('karaokeSuccess').classList.add('visible');
+          document.getElementById('karaokeNext').style.display = 'inline-block';
+        });
+      });
+    }, 500);
+  } else {
+    btn.classList.add('wrong-answer');
+    setTimeout(() => btn.classList.remove('wrong-answer'), 800);
+    // Show quip toast
+    const toast = document.getElementById('quipToast');
+    toast.textContent = opt.quip;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2500);
+  }
+}
+
+// ==================== SCENE 4: KOH TAO UNDERWATER ====================
+let foundItems = 0;
+const totalItems = 6;
+let adventureInited = false;
+
+function initAdventure() {
+  if (adventureInited) return;
+  adventureInited = true;
+  showDialog(CONTENT.scene4.dialog);
+}
+
+function handleSceneMouse(e) {
+  const rect = e.currentTarget.getBoundingClientRect();
+  updateMagnifier(e.currentTarget, e.clientX - rect.left, e.clientY - rect.top);
+  checkProximity(e.currentTarget, e.clientX - rect.left, e.clientY - rect.top);
+}
+function handleSceneTouch(e) {
+  e.preventDefault();
+  const rect = e.currentTarget.getBoundingClientRect();
+  const t = e.touches[0];
+  updateMagnifier(e.currentTarget, t.clientX - rect.left, t.clientY - rect.top);
+  checkProximity(e.currentTarget, t.clientX - rect.left, t.clientY - rect.top);
+}
+function updateMagnifier(c, x, y) {
+  const circle = document.getElementById('magnifyCircle');
+  circle.style.left = (x - 35) + 'px';
+  circle.style.top = (y - 35) + 'px';
+  circle.style.opacity = '1';
+}
+function checkProximity(container, x, y) {
+  container.querySelectorAll('.hidden-item:not(.found)').forEach(item => {
+    const ix = item.offsetLeft + item.offsetWidth / 2;
+    const iy = item.offsetTop + item.offsetHeight / 2;
+    const dist = Math.sqrt((x - ix) ** 2 + (y - iy) ** 2);
+    item.classList.toggle('near', dist < 60);
+  });
+}
+function findItem(el) {
+  if (el.classList.contains('found')) return;
+  el.classList.remove('near');
+  el.classList.add('found');
+  foundItems++;
+  document.getElementById('foundCounter').textContent = 'Evidence: ' + foundItems + ' / ' + totalItems;
+  // Get the found_text from content
+  const idx = parseInt(el.dataset.idx);
+  const objData = CONTENT.scene4.hidden_objects[idx];
+  showDialog([{speaker:'Evidence Found', text:objData.name + ' - ' + objData.found_text}]);
+  if (foundItems === totalItems) {
+    setTimeout(() => {
+      showDialog(CONTENT.scene4.success_dialog, () => {
+        addInventoryItem(2);
+        showMemoryNote(CONTENT.scene4.memory_note, 4, () => {
+          document.getElementById('adventureSuccess').classList.add('visible');
+          document.getElementById('adventureNext').style.display = 'inline-block';
+        });
+      });
+    }, 600);
+  }
+}
+
+// ==================== SCENE 5: DILLON CONCERT ====================
+const TARGET_PHRASE = CONTENT.scene5.target_phrase;
+let placedWords = [];
+let concertInited = false;
+
+function initConcert() {
+  if (concertInited) return;
+  concertInited = true;
+  showDialog(CONTENT.scene5.dialog, () => {
+    const bank = document.getElementById('wordBank');
+    const allWords = [...TARGET_PHRASE, ...CONTENT.scene5.extra_words];
+    shuffle(allWords);
+    allWords.forEach(word => {
+      const tile = document.createElement('div');
+      tile.className = 'word-tile';
+      tile.textContent = word;
+      tile.onclick = () => addWord(tile, word);
+      bank.appendChild(tile);
+    });
+  });
+}
+
+function addWord(tile, word) {
+  if (tile.classList.contains('used')) return;
+  tile.classList.add('used');
+  placedWords.push({word, tile});
+  const slot = document.createElement('div');
+  slot.className = 'word-slot';
+  slot.textContent = word;
+  slot.onclick = () => removeWord(slot, tile, word);
+  document.getElementById('wordSlots').appendChild(slot);
+  checkPhrase();
+}
+function removeWord(slot, tile, word) {
+  slot.remove();
+  tile.classList.remove('used');
+  placedWords = placedWords.filter(w => !(w.word === word && w.tile === tile));
+  checkPhrase();
+}
+function checkPhrase() {
+  const current = placedWords.map(w => w.word);
+  if (current.length === TARGET_PHRASE.length && current.every((w,i) => w === TARGET_PHRASE[i])) {
+    const msg = document.getElementById('concertSuccess');
+    msg.innerHTML = '"I think we make a great team."';
+    msg.classList.add('visible');
+    setTimeout(() => {
+      showDialog(CONTENT.scene5.success_dialog, () => {
+        addInventoryItem(3);
+        showMemoryNote(CONTENT.scene5.memory_note, 5, () => {
+          document.getElementById('concertNext').style.display = 'inline-block';
+        });
+      });
+    }, 400);
+  } else {
+    document.getElementById('concertSuccess').classList.remove('visible');
+  }
+}
+
+// ==================== SCENE 6: LOVE LETTER ====================
+function initLoveLetter() {
+  const letter = document.getElementById('loveLetter');
+  letter.innerHTML = '';
+  // Build paragraphs
+  CONTENT.scene6.love_letter_paragraphs.forEach(text => {
+    const p = document.createElement('p');
+    p.textContent = text;
+    letter.appendChild(p);
+  });
+  // Add signoff
+  const signoff = document.createElement('div');
+  signoff.className = 'signoff';
+  signoff.textContent = CONTENT.scene6.signoff;
+  letter.appendChild(signoff);
+
+  const elements = letter.querySelectorAll('p, .signoff');
+  elements.forEach((el, i) => {
+    setTimeout(() => el.classList.add('visible'), 500 + i * 600);
+  });
+  setTimeout(() => startHearts(), 500 + elements.length * 600 + 400);
+}
+
+function startHearts() {
+  const container = document.getElementById('heartsContainer');
+  const symbols = ['\u2665','\u2764'];
+  function dropHeart() {
+    const h = document.createElement('div');
+    h.className = 'falling-heart';
+    h.textContent = symbols[Math.floor(Math.random()*symbols.length)];
+    h.style.left = Math.random()*100+'%';
+    h.style.fontSize = (0.8+Math.random()*0.8)+'rem';
+    h.style.animationDuration = (4+Math.random()*4)+'s';
+    container.appendChild(h);
+    setTimeout(() => h.remove(), 9000);
+  }
+  for (let i = 0; i < 8; i++) setTimeout(dropHeart, i*300);
+  setInterval(() => { if (currentScene === 6) dropHeart(); }, 800);
+  const colors = ['#6b1d2a','#c9a84c','#e2c97e','#8b3a4a'];
+  for (let i = 0; i < 20; i++) {
+    setTimeout(() => {
+      const p = document.createElement('div');
+      p.className = 'confetti-piece';
+      p.style.left = Math.random()*100+'%';
+      p.style.background = colors[Math.floor(Math.random()*colors.length)];
+      p.style.width = (4+Math.random()*6)+'px';
+      p.style.height = (4+Math.random()*6)+'px';
+      p.style.borderRadius = Math.random()>0.5?'50%':'0';
+      p.style.animationDuration = (3+Math.random()*4)+'s';
+      container.appendChild(p);
+      setTimeout(() => p.remove(), 8000);
+    }, i*150);
+  }
+}
+
+// ==================== UTILITIES ====================
+function shuffle(arr) {
+  for (let i = arr.length-1; i > 0; i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]] = [arr[j],arr[i]];
+  }
+  return arr;
+}
+
+// Prevent double-tap zoom on iOS
+document.addEventListener('touchend', function(e) {
+  const t = e.target.closest('.start-btn,.letter-tile,.song-option,.hidden-item,.word-tile,.word-slot,.shard,.hud-btn,.next-btn,.journal-close,.phone-close,.memory-dismiss,#dialogBox');
+  if (t) { e.preventDefault(); t.click(); }
+}, {passive: false});
+</script>
+</body>
+</html>
