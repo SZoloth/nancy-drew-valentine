@@ -45,13 +45,14 @@ music() {
     return
   fi
   echo "  MUSIC $file"
-  # Using sound-generation endpoint (music endpoint requires paid plan)
-  curl -s -X POST "https://api.elevenlabs.io/v1/sound-generation" \
+  curl -s -X POST "https://api.elevenlabs.io/v1/music" \
     -H "xi-api-key: $API_KEY" \
     -H "Content-Type: application/json" \
     -d "$(jq -n --arg prompt "$prompt" '{
-      text: $prompt,
-      duration_seconds: 10
+      prompt: $prompt,
+      instrumental: true,
+      duration_ms: 90000,
+      output_format: "mp3_44100_128"
     }')" \
     -o "$OUT/$file"
 }
@@ -85,7 +86,7 @@ echo "=== Generating narrator TTS ==="
 # Scene 1 dialog (lines 0-5, all narrator/casefile)
 tts "s1-d0.mp3" "A new case file lands on your desk. The label reads: VALENTINE'S DAY - CLASSIFIED."
 tts "s1-d1.mp3" "You open it. Inside, a note:"
-tts "s1-d2.mp3" "Carter, something's been stolen. Five of our best memories have gone missing, scattered across the places that matter most to us. I need you to find them. Follow the clues. Trust your instincts. You've always been the smarter one anyway. I know how much you love a good puzzle."
+tts "s1-d2.mp3" "Carter, something's been stolen. Five of our best memories have gone missing, scattered across the places that matter most to us. I need you to find them. Follow the clues. Trust your instincts. I know how much you love a good puzzle."
 tts "s1-d3.mp3" "-- Sam"
 tts "s1-d4.mp3" "Pinned to the note: a photo of a pottery studio, a plane ticket stub, a dive log, a concert wristband, and a faded Polaroid of mountains at sunset."
 tts "s1-d5.mp3" "Your journal is open. Your phone is charged. Let's get to work, detective."
