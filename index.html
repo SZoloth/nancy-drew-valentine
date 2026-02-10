@@ -63,6 +63,10 @@ html,body{width:100%;height:100dvh;overflow:hidden;font-family:Georgia,'Times Ne
 #dialogText{font-size:clamp(0.9rem,2.5vw,1rem);line-height:1.6;color:var(--cream)}
 #dialogText .speaker{color:var(--gold);font-weight:700;display:block;margin-bottom:2px;font-size:0.85rem;letter-spacing:0.05em;text-transform:uppercase}
 .dialog-continue{font-size:0.75rem;color:var(--gold-light);opacity:0.7;margin-top:6px;text-align:right}
+.dialog-pause{position:absolute;right:10px;top:10px;width:28px;height:28px;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;-webkit-tap-highlight-color:transparent;z-index:2}
+.dialog-pause svg{width:14px;height:14px}
+#dialogBox.paused{opacity:0.6}
+#dialogBox.paused .dialog-continue{display:none}
 
 /* ===== JOURNAL POPUP ===== */
 #journalPopup{position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.7);padding:1rem}
@@ -348,10 +352,14 @@ html,body{width:100%;height:100dvh;overflow:hidden;font-family:Georgia,'Times Ne
 
 <!-- ========== DIALOG BOX ========== -->
 <div id="dialogOverlay">
-  <div id="dialogBox" onclick="advanceDialog()">
+  <div id="dialogBox" onclick="handleDialogClick(event)">
     <div id="dialogIcon"><svg viewBox="0 0 24 24" fill="none" stroke="#c9a84c" stroke-width="1.5"><circle cx="11" cy="11" r="6"/><line x1="15.5" y1="15.5" x2="20" y2="20" stroke-linecap="round"/></svg></div>
     <div id="dialogText"></div>
-    <div class="dialog-continue">tap to continue</div>
+    <div class="dialog-continue" id="dialogHint">tap to continue</div>
+    <div class="dialog-pause" id="dialogPause" onclick="toggleDialogPause(event)">
+      <svg id="pauseIcon" viewBox="0 0 24 24" fill="#c9a84c" stroke="none"><rect x="7" y="5" width="3" height="14" rx="1"/><rect x="14" y="5" width="3" height="14" rx="1"/></svg>
+      <svg id="playIcon" viewBox="0 0 24 24" fill="#c9a84c" stroke="none" style="display:none"><polygon points="7,5 19,12 7,19"/></svg>
+    </div>
   </div>
 </div>
 
@@ -683,17 +691,21 @@ let memoryCallback = null;
 // ==================== DIALOG SYSTEM ====================
 let dialogAudioTag = '';  // e.g. 's1' for scene1 dialog, 's2-success' etc.
 let dialogLineIndex = 0;
+let dialogPaused = false;
 
 function showDialog(lines, cb, audioTag) {
   dialogQueue = Array.isArray(lines) ? [...lines] : [lines];
   dialogCallback = cb || null;
   dialogAudioTag = audioTag || '';
   dialogLineIndex = 0;
+  dialogPaused = false;
+  updatePauseUI();
   showNextLine();
 }
 function showNextLine() {
+  if (dialogPaused) return;
   if (!dialogQueue.length) {
-    document.getElementById('dialogBox').classList.remove('show');
+    document.getElementById('dialogBox').classList.remove('show','paused');
     AudioManager.stopNarrator();
     if (dialogCallback) { const cb = dialogCallback; dialogCallback = null; cb(); }
     return;
@@ -707,6 +719,7 @@ function showNextLine() {
     text.innerHTML = line;
   }
   box.classList.add('show');
+  box.classList.remove('paused');
 
   // Play narrator audio if mapped
   const audioKey = dialogAudioTag + '-' + dialogLineIndex;
@@ -714,7 +727,7 @@ function showNextLine() {
   dialogLineIndex++;
   if (audioFile && typeof line === 'object' && ['narrator','note','casefile'].includes(line.speaker)) {
     AudioManager.playNarrator(audioFile, () => {
-      // Auto-advance on narration end
+      if (dialogPaused) return;
       if (dialogQueue.length > 0) showNextLine();
       else advanceDialog();
     });
@@ -722,8 +735,36 @@ function showNextLine() {
   AudioManager.playSFX('sfx-dialog-advance.mp3');
 }
 function advanceDialog() {
+  if (dialogPaused) return;
   AudioManager.stopNarrator();
   showNextLine();
+}
+function handleDialogClick(e) {
+  if (e.target.closest('.dialog-pause')) return;
+  if (dialogPaused) return;
+  advanceDialog();
+}
+function toggleDialogPause(e) {
+  e.stopPropagation();
+  dialogPaused = !dialogPaused;
+  const box = document.getElementById('dialogBox');
+  if (dialogPaused) {
+    box.classList.add('paused');
+    if (AudioManager.narratorPlaying) {
+      AudioManager.narrator.pause();
+    }
+  } else {
+    box.classList.remove('paused');
+    if (AudioManager.narrator.src && AudioManager.narrator.paused && AudioManager.narratorPlaying) {
+      AudioManager.narrator.play().catch(() => {});
+    }
+  }
+  updatePauseUI();
+}
+function updatePauseUI() {
+  document.getElementById('pauseIcon').style.display = dialogPaused ? 'none' : 'block';
+  document.getElementById('playIcon').style.display = dialogPaused ? 'block' : 'none';
+  document.getElementById('dialogHint').textContent = dialogPaused ? 'paused' : 'tap to continue';
 }
 
 // ==================== SCENE MANAGEMENT ====================
