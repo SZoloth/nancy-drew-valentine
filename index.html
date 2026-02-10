@@ -165,6 +165,11 @@ html,body{width:100%;height:100dvh;overflow:hidden;font-family:Georgia,'Times Ne
 .success-msg.visible{opacity:1}
 .next-btn{background:rgba(201,168,76,0.12);border:1px solid var(--gold);color:var(--gold);padding:8px 24px;font-family:Georgia,serif;font-size:0.95rem;letter-spacing:0.05em;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:all 0.3s;border-radius:2px;margin-top:0.75rem;display:none}
 .next-btn:active{background:rgba(201,168,76,0.25)}
+
+/* ===== AUDIO MUTE BUTTON ===== */
+.hud-btn.muted svg .sound-on{display:none}
+.hud-btn.muted svg .sound-off{display:inline}
+.hud-btn:not(.muted) svg .sound-off{display:none}
 </style>
 </head>
 <body>
@@ -275,6 +280,12 @@ html,body{width:100%;height:100dvh;overflow:hidden;font-family:Georgia,'Times Ne
     <!-- Slot 3: Music note -->
     <div class="inv-slot" id="inv3"><svg viewBox="0 0 24 24" fill="none"><circle cx="8" cy="18" r="3" fill="#c9a84c"/><line x1="11" y1="18" x2="11" y2="5" stroke="#c9a84c" stroke-width="1.5"/><path d="M11,5 Q16,3 18,7" stroke="#c9a84c" stroke-width="1.5" fill="none"/></svg></div>
   </div>
+  <div class="hud-btn" id="muteBtn" onclick="toggleMute()" title="Toggle Audio">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#c9a84c" stroke-width="1.5">
+      <g class="sound-on"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.54 8.46a5 5 0 010 7.07" stroke-linecap="round"/><path d="M19.07 4.93a10 10 0 010 14.14" stroke-linecap="round"/></g>
+      <g class="sound-off"><path d="M11 5L6 9H2v6h4l5 4V5z"/><line x1="23" y1="9" x2="17" y2="15" stroke-linecap="round"/><line x1="17" y1="9" x2="23" y2="15" stroke-linecap="round"/></g>
+    </svg>
+  </div>
   <div class="hud-btn" onclick="togglePhone()" title="Phone">
     <svg viewBox="0 0 24 24" fill="none" stroke="#c9a84c" stroke-width="1.5"><rect x="6" y="3" width="12" height="18" rx="2"/><line x1="10" y1="18" x2="14" y2="18"/></svg>
   </div>
@@ -326,6 +337,170 @@ html,body{width:100%;height:100dvh;overflow:hidden;font-family:Georgia,'Times Ne
 </div>
 
 <script>
+// ==================== AUDIO MANAGER ====================
+const AudioManager = {
+  music: new Audio(),
+  narrator: new Audio(),
+  sfxPool: Array.from({length:4}, () => new Audio()),
+  sfxIndex: 0,
+  volume: { master: 1, music: 0.3, sfx: 0.5, narrator: 0.8 },
+  muted: localStorage.getItem('nd-muted') === 'true',
+  currentMusicSrc: '',
+  narratorPlaying: false,
+
+  init() {
+    this.music.loop = true;
+    if (this.muted) {
+      document.getElementById('muteBtn').classList.add('muted');
+    }
+    // Preload SFX on first user interaction
+    const preload = () => {
+      this.preloadSFX();
+      document.removeEventListener('click', preload);
+      document.removeEventListener('touchend', preload);
+    };
+    document.addEventListener('click', preload);
+    document.addEventListener('touchend', preload);
+  },
+
+  _vol(type) {
+    if (this.muted) return 0;
+    return this.volume.master * this.volume[type];
+  },
+
+  // ── Music ──
+  playMusic(scene) {
+    const src = 'assets/audio/music-scene' + scene + '.mp3';
+    if (this.currentMusicSrc === src) return;
+    this.currentMusicSrc = src;
+    // Crossfade
+    const oldVol = this.music.volume;
+    const fadeOut = () => {
+      if (this.music.volume > 0.02) {
+        this.music.volume = Math.max(0, this.music.volume - 0.05);
+        requestAnimationFrame(fadeOut);
+      } else {
+        this.music.src = src;
+        this.music.volume = 0;
+        this.music.play().catch(() => {});
+        this._fadeInMusic();
+      }
+    };
+    if (this.music.src && !this.music.paused) {
+      fadeOut();
+    } else {
+      this.music.src = src;
+      this.music.volume = 0;
+      this.music.play().catch(() => {});
+      this._fadeInMusic();
+    }
+  },
+
+  _fadeInMusic() {
+    const target = this._vol('music');
+    const step = () => {
+      if (this.music.volume < target - 0.02) {
+        this.music.volume = Math.min(target, this.music.volume + 0.03);
+        requestAnimationFrame(step);
+      } else {
+        this.music.volume = target;
+      }
+    };
+    step();
+  },
+
+  // ── Narrator ──
+  playNarrator(file, onEnd) {
+    this.narrator.src = 'assets/audio/' + file;
+    this.narrator.volume = this._vol('narrator');
+    this.narratorPlaying = true;
+    this.narrator.onended = () => {
+      this.narratorPlaying = false;
+      if (onEnd) onEnd();
+    };
+    this.narrator.onerror = () => {
+      this.narratorPlaying = false;
+      if (onEnd) onEnd();
+    };
+    this.narrator.play().catch(() => {
+      this.narratorPlaying = false;
+      if (onEnd) onEnd();
+    });
+  },
+
+  stopNarrator() {
+    if (this.narratorPlaying) {
+      this.narrator.pause();
+      this.narrator.currentTime = 0;
+      this.narratorPlaying = false;
+      this.narrator.onended = null;
+    }
+  },
+
+  // ── SFX ──
+  playSFX(file) {
+    const audio = this.sfxPool[this.sfxIndex % this.sfxPool.length];
+    this.sfxIndex++;
+    audio.src = 'assets/audio/' + file;
+    audio.volume = this._vol('sfx');
+    audio.play().catch(() => {});
+  },
+
+  preloadSFX() {
+    const files = [
+      'sfx-letter-place.mp3','sfx-letter-wrong.mp3','sfx-puzzle-complete.mp3',
+      'sfx-transition.mp3','sfx-item-found.mp3','sfx-inventory.mp3',
+      'sfx-dialog-advance.mp3','sfx-song-correct.mp3','sfx-song-wrong.mp3',
+      'sfx-word-place.mp3','sfx-word-remove.mp3','sfx-hearts.mp3'
+    ];
+    files.forEach(f => {
+      const a = new Audio();
+      a.preload = 'auto';
+      a.src = 'assets/audio/' + f;
+    });
+  },
+
+  // ── Preload scene audio ──
+  preloadScene(scene) {
+    // Preload next scene's music
+    const musicPreload = new Audio();
+    musicPreload.preload = 'auto';
+    musicPreload.src = 'assets/audio/music-scene' + scene + '.mp3';
+  },
+
+  // ── Mute ──
+  toggleMute() {
+    this.muted = !this.muted;
+    localStorage.setItem('nd-muted', this.muted);
+    document.getElementById('muteBtn').classList.toggle('muted', this.muted);
+    this.music.volume = this._vol('music');
+    this.narrator.volume = this._vol('narrator');
+  }
+};
+
+// ── Narrator audio file mapping ──
+const NARRATOR_MAP = {
+  // scene1 dialog
+  's1-0':'s1-d0.mp3','s1-1':'s1-d1.mp3','s1-2':'s1-d2.mp3',
+  's1-3':'s1-d3.mp3','s1-4':'s1-d4.mp3','s1-5':'s1-d5.mp3',
+  // scene2 dialog
+  's2-0':'s2-d0.mp3','s2-1':'s2-d1.mp3','s2-2':'s2-d2.mp3','s2-3':'s2-d3.mp3',
+  's2-success-0':'s2-success.mp3',
+  // scene3 dialog
+  's3-0':'s3-d0.mp3','s3-1':'s3-d1.mp3','s3-2':'s3-d2.mp3','s3-3':'s3-d3.mp3',
+  's3-success-0':'s3-success.mp3',
+  // scene4 dialog
+  's4-0':'s4-d0.mp3','s4-1':'s4-d1.mp3','s4-2':'s4-d2.mp3','s4-3':'s4-d3.mp3',
+  's4-success-0':'s4-success.mp3',
+  's4-found-0':'s4-found0.mp3','s4-found-1':'s4-found1.mp3','s4-found-2':'s4-found2.mp3',
+  's4-found-3':'s4-found3.mp3','s4-found-4':'s4-found4.mp3',
+  // scene5 dialog
+  's5-0':'s5-d0.mp3','s5-1':'s5-d1.mp3','s5-2':'s5-d2.mp3','s5-3':'s5-d3.mp3',
+  's5-success-0':'s5-success0.mp3','s5-success-1':'s5-success1.mp3'
+};
+
+function toggleMute() { AudioManager.toggleMute(); }
+
 // ==================== CONTENT DATA ====================
 const CONTENT = {
   scene1: {
@@ -451,14 +626,20 @@ const cluesSolved = [false,false,false,false]; // pottery, gymkhana, underwater,
 let memoryCallback = null;
 
 // ==================== DIALOG SYSTEM ====================
-function showDialog(lines, cb) {
+let dialogAudioTag = '';  // e.g. 's1' for scene1 dialog, 's2-success' etc.
+let dialogLineIndex = 0;
+
+function showDialog(lines, cb, audioTag) {
   dialogQueue = Array.isArray(lines) ? [...lines] : [lines];
   dialogCallback = cb || null;
+  dialogAudioTag = audioTag || '';
+  dialogLineIndex = 0;
   showNextLine();
 }
 function showNextLine() {
   if (!dialogQueue.length) {
     document.getElementById('dialogBox').classList.remove('show');
+    AudioManager.stopNarrator();
     if (dialogCallback) { const cb = dialogCallback; dialogCallback = null; cb(); }
     return;
   }
@@ -471,13 +652,28 @@ function showNextLine() {
     text.innerHTML = line;
   }
   box.classList.add('show');
+
+  // Play narrator audio if mapped
+  const audioKey = dialogAudioTag + '-' + dialogLineIndex;
+  const audioFile = NARRATOR_MAP[audioKey];
+  dialogLineIndex++;
+  if (audioFile && typeof line === 'object' && ['narrator','note','casefile'].includes(line.speaker)) {
+    AudioManager.playNarrator(audioFile, () => {
+      // Auto-advance on narration end
+      if (dialogQueue.length > 0) showNextLine();
+      else advanceDialog();
+    });
+  }
+  AudioManager.playSFX('sfx-dialog-advance.mp3');
 }
 function advanceDialog() {
+  AudioManager.stopNarrator();
   showNextLine();
 }
 
 // ==================== SCENE MANAGEMENT ====================
 function goToScene(n, transText) {
+  AudioManager.playSFX('sfx-transition.mp3');
   const overlay = document.getElementById('transitionOverlay');
   const tText = document.getElementById('transitionText');
   tText.textContent = transText || 'Loading...';
@@ -486,6 +682,9 @@ function goToScene(n, transText) {
     document.getElementById('scene' + currentScene).classList.remove('active');
     document.getElementById('scene' + n).classList.add('active');
     currentScene = n;
+    AudioManager.playMusic(n);
+    // Preload next scene
+    if (n < totalScenes) AudioManager.preloadScene(n + 1);
     setTimeout(() => {
       overlay.classList.remove('show');
       if (n === 2) initPottery();
@@ -498,15 +697,19 @@ function goToScene(n, transText) {
 }
 
 function beginCase() {
+  AudioManager.init();
+  AudioManager.playMusic(1);
+  AudioManager.preloadScene(2);
   showDialog(CONTENT.scene1.dialog, () => {
     goToScene(2, 'Traveling to the pottery studio...');
-  });
+  }, 's1');
 }
 
 // ==================== INVENTORY ====================
 function addInventoryItem(index) {
   cluesSolved[index] = true;
   document.getElementById('inv' + index).classList.add('filled');
+  AudioManager.playSFX('sfx-inventory.mp3');
 }
 
 // ==================== JOURNAL ====================
@@ -594,7 +797,7 @@ function initPottery() {
   potteryInited = true;
   showDialog(CONTENT.scene2.dialog, () => {
     setupPotteryPart(1);
-  });
+  }, 's2');
 }
 
 function setupPotteryPart(part) {
@@ -654,6 +857,7 @@ function setupPotteryPart(part) {
 function pickLetter(tile, letter) {
   if (tile.classList.contains('used') || potteryIndex >= currentPotteryAnswer.length) return;
   if (letter === currentPotteryAnswer[potteryIndex]) {
+    AudioManager.playSFX('sfx-letter-place.mp3');
     tile.classList.add('used');
     const slot = document.getElementById('slot-' + potteryIndex);
     slot.textContent = letter;
@@ -667,6 +871,7 @@ function pickLetter(tile, letter) {
     document.getElementById('potteryWord').textContent = currentPotteryAnswer.substring(0, potteryIndex);
 
     if (potteryIndex === currentPotteryAnswer.length) {
+      AudioManager.playSFX('sfx-puzzle-complete.mp3');
       // Show the display version
       document.getElementById('potteryWord').textContent = potteryPart === 1 ? CONTENT.scene2.puzzle_part1_display : CONTENT.scene2.puzzle_part2_display;
 
@@ -685,11 +890,12 @@ function pickLetter(tile, letter) {
               document.getElementById('potterySuccess').classList.add('visible');
               document.getElementById('potteryNext').style.display = 'inline-block';
             });
-          });
+          }, 's2-success');
         }, 400);
       }
     }
   } else {
+    AudioManager.playSFX('sfx-letter-wrong.mp3');
     tile.style.transform = 'translateX(-4px)';
     setTimeout(() => tile.style.transform = 'translateX(4px)', 80);
     setTimeout(() => tile.style.transform = '', 160);
@@ -703,12 +909,11 @@ let karaokeSolved = false;
 function initKaraoke() {
   if (karaokeInited) return;
   karaokeInited = true;
-  showDialog(CONTENT.scene3.dialog, () => {
+  const karaokeSetup = () => {
     const sub = document.getElementById('karaokeSub');
     sub.textContent = CONTENT.scene3.puzzle_prompt;
     const container = document.getElementById('songOptions');
     container.innerHTML = '';
-    // Shuffle options for variety
     const options = [...CONTENT.scene3.options];
     shuffle(options);
     options.forEach(opt => {
@@ -718,15 +923,16 @@ function initKaraoke() {
       btn.onclick = () => pickSong(btn, opt);
       container.appendChild(btn);
     });
-  });
+  };
+  showDialog(CONTENT.scene3.dialog, karaokeSetup, 's3');
 }
 
 function pickSong(btn, opt) {
   if (karaokeSolved) return;
   if (opt.correct) {
+    AudioManager.playSFX('sfx-song-correct.mp3');
     karaokeSolved = true;
     btn.classList.add('correct-answer');
-    // Disable other buttons
     document.querySelectorAll('.song-option').forEach(b => { if (b !== btn) b.style.opacity = '0.3'; });
     setTimeout(() => {
       showDialog(CONTENT.scene3.success_dialog, () => {
@@ -736,12 +942,12 @@ function pickSong(btn, opt) {
           document.getElementById('karaokeSuccess').classList.add('visible');
           document.getElementById('karaokeNext').style.display = 'inline-block';
         });
-      });
+      }, 's3-success');
     }, 500);
   } else {
+    AudioManager.playSFX('sfx-song-wrong.mp3');
     btn.classList.add('wrong-answer');
     setTimeout(() => btn.classList.remove('wrong-answer'), 800);
-    // Show quip toast
     const toast = document.getElementById('quipToast');
     toast.textContent = opt.quip;
     toast.classList.add('show');
@@ -757,7 +963,7 @@ let adventureInited = false;
 function initAdventure() {
   if (adventureInited) return;
   adventureInited = true;
-  showDialog(CONTENT.scene4.dialog);
+  showDialog(CONTENT.scene4.dialog, null, 's4');
 }
 
 function handleSceneMouse(e) {
@@ -794,15 +1000,21 @@ function findItem(el) {
   const idx = parseInt(el.dataset.idx);
   const objData = CONTENT.scene4.hidden_objects[idx];
   if (el.classList.contains('found')) {
-    showDialog([{speaker:'Evidence Found', text:objData.name + ' - ' + objData.found_text}]);
+    showDialog([{speaker:'Evidence Found', text:objData.name + ' - ' + objData.found_text}], null, 's4-found');
+    dialogAudioTag = 's4-found'; dialogLineIndex = idx;
     return;
   }
+  AudioManager.playSFX('sfx-item-found.mp3');
   el.classList.remove('near');
   el.classList.add('found');
   foundItems++;
   document.getElementById('foundCounter').textContent = 'Evidence: ' + foundItems + ' / ' + totalItems;
+
+  // Play found_text narrator audio
+  const foundAudioFile = NARRATOR_MAP['s4-found-' + idx];
+  if (foundAudioFile) AudioManager.playNarrator(foundAudioFile);
+
   if (foundItems === totalItems) {
-    // Last item: show found_text, then chain into success flow on dismiss
     showDialog([{speaker:'Evidence Found', text:objData.name + ' - ' + objData.found_text}], () => {
       showDialog(CONTENT.scene4.success_dialog, () => {
         addInventoryItem(2);
@@ -810,7 +1022,7 @@ function findItem(el) {
           document.getElementById('adventureSuccess').classList.add('visible');
           document.getElementById('adventureNext').style.display = 'inline-block';
         });
-      });
+      }, 's4-success');
     });
   } else {
     showDialog([{speaker:'Evidence Found', text:objData.name + ' - ' + objData.found_text}]);
@@ -825,7 +1037,7 @@ let concertInited = false;
 function initConcert() {
   if (concertInited) return;
   concertInited = true;
-  showDialog(CONTENT.scene5.dialog, () => {
+  const concertSetup = () => {
     const bank = document.getElementById('wordBank');
     const allWords = [...TARGET_PHRASE, ...CONTENT.scene5.extra_words];
     shuffle(allWords);
@@ -836,11 +1048,13 @@ function initConcert() {
       tile.onclick = () => addWord(tile, word);
       bank.appendChild(tile);
     });
-  });
+  };
+  showDialog(CONTENT.scene5.dialog, concertSetup, 's5');
 }
 
 function addWord(tile, word) {
   if (tile.classList.contains('used')) return;
+  AudioManager.playSFX('sfx-word-place.mp3');
   tile.classList.add('used');
   placedWords.push({word, tile});
   const slot = document.createElement('div');
@@ -851,6 +1065,7 @@ function addWord(tile, word) {
   checkPhrase();
 }
 function removeWord(slot, tile, word) {
+  AudioManager.playSFX('sfx-word-remove.mp3');
   slot.remove();
   tile.classList.remove('used');
   placedWords = placedWords.filter(w => !(w.word === word && w.tile === tile));
@@ -862,13 +1077,14 @@ function checkPhrase() {
     const msg = document.getElementById('concertSuccess');
     msg.innerHTML = '"Brownies and carrot cake."';
     msg.classList.add('visible');
+    AudioManager.playSFX('sfx-puzzle-complete.mp3');
     setTimeout(() => {
       showDialog(CONTENT.scene5.success_dialog, () => {
         addInventoryItem(3);
         showMemoryNote(CONTENT.scene5.memory_note, 5, () => {
           document.getElementById('concertNext').style.display = 'inline-block';
         });
-      });
+      }, 's5-success');
     }, 400);
   } else {
     document.getElementById('concertSuccess').classList.remove('visible');
@@ -899,6 +1115,7 @@ function initLoveLetter() {
 }
 
 function startHearts() {
+  AudioManager.playSFX('sfx-hearts.mp3');
   const container = document.getElementById('heartsContainer');
   const symbols = ['\u2665','\u2764'];
   function dropHeart() {
