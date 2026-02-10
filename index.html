@@ -121,13 +121,18 @@ html,body{width:100%;height:100dvh;overflow:hidden;font-family:Georgia,'Times Ne
 .quip-toast.show{opacity:1}
 
 /* ===== SCENE 4: UNDERWATER ===== */
-.adventure-area{position:absolute;inset:0;bottom:0;cursor:crosshair}
-.hidden-item{position:absolute;width:48px;height:48px;display:flex;align-items:center;justify-content:center;opacity:0;transition:all 0.4s;cursor:pointer;-webkit-tap-highlight-color:transparent;border-radius:50%;z-index:5}
+.adventure-area{position:absolute;inset:0;bottom:0;cursor:none}
+.hidden-item{position:absolute;width:48px;height:48px;display:flex;align-items:center;justify-content:center;opacity:0;transition:all 0.4s;cursor:none;-webkit-tap-highlight-color:transparent;border-radius:50%;z-index:5;overflow:hidden}
+.hidden-item img{opacity:0;transition:opacity 0.4s}
 .hidden-item.near{opacity:0.7;background:rgba(201,168,76,0.3);animation:itemPulse 1s ease-in-out infinite;box-shadow:0 0 20px rgba(201,168,76,0.5)}
+.hidden-item.near img{opacity:0.5}
 @keyframes itemPulse{0%,100%{transform:scale(1);box-shadow:0 0 15px rgba(201,168,76,0.4)}50%{transform:scale(1.15);box-shadow:0 0 30px rgba(201,168,76,0.7)}}
-.hidden-item.found{opacity:1;background:rgba(201,168,76,0.25);border:2px solid var(--gold);animation:invPop 0.5s ease}
+.hidden-item.found{opacity:1;background:rgba(201,168,76,0.25);border:2px solid var(--gold);animation:invPop 0.5s ease;cursor:pointer}
+.hidden-item.found img{opacity:1}
 .found-counter{position:absolute;top:12px;right:12px;background:var(--hud-bg);border:1px solid rgba(201,168,76,0.3);border-radius:4px;padding:4px 10px;font-size:0.8rem;color:var(--gold);z-index:5}
-.magnify-circle{position:absolute;width:70px;height:70px;border:2px solid var(--gold);border-radius:50%;pointer-events:none;opacity:0;transition:opacity 0.15s;box-shadow:0 0 15px rgba(201,168,76,0.2),inset 0 0 15px rgba(201,168,76,0.08);z-index:10}
+.magnify-circle{position:absolute;width:80px;height:80px;border:3px solid var(--gold);border-radius:50%;pointer-events:none;opacity:0;transition:opacity 0.15s;box-shadow:0 0 20px rgba(201,168,76,0.3),inset 0 0 20px rgba(201,168,76,0.1);z-index:10}
+.magnify-circle::after{content:'';position:absolute;bottom:-18px;right:-8px;width:4px;height:22px;background:var(--gold);border-radius:2px;transform:rotate(-45deg);transform-origin:top center;opacity:0.8}
+.magnify-circle.near-item{box-shadow:0 0 30px rgba(201,168,76,0.6),inset 0 0 25px rgba(201,168,76,0.15);border-color:var(--gold-light)}
 
 /* ===== SCENE 5: DILLON (VW STYLE) ===== */
 .stage-area{position:relative;width:min(380px,92vw);margin-top:1rem;background:rgba(10,8,6,0.8);border-radius:10px;padding:1.25rem;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
@@ -203,29 +208,26 @@ html,body{width:100%;height:100dvh;overflow:hidden;font-family:Georgia,'Times Ne
 <div class="quip-toast" id="quipToast"></div>
 </div>
 
-<!-- ========== SCENE 4: KOH TAO UNDERWATER (6 HIDDEN OBJECTS) ========== -->
+<!-- ========== SCENE 4: KOH TAO UNDERWATER (5 HIDDEN OBJECTS) ========== -->
 <div id="scene4" class="scene">
 <div class="scene-bg"></div>
 <div class="adventure-area" id="adventureScene" ontouchmove="handleSceneTouch(event)" onmousemove="handleSceneMouse(event)">
-  <div class="found-counter" id="foundCounter">Evidence: 0 / 6</div>
+  <div class="found-counter" id="foundCounter">Evidence: 0 / 5</div>
   <!-- Hidden items positioned across the underwater scene -->
   <div class="hidden-item" id="item-cuttlefish" data-name="Cuttlefish" data-idx="0" style="top:25%;left:20%;" onclick="findItem(this)">
-    <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><ellipse cx="14" cy="12" rx="10" ry="7" fill="#c9a84c" opacity="0.8"/><circle cx="10" cy="11" r="2" fill="#2c1810"/><circle cx="18" cy="11" r="2" fill="#2c1810"/><path d="M6,17 Q8,22 10,18 Q12,22 14,18 Q16,22 18,18 Q20,22 22,17" stroke="#c9a84c" stroke-width="1.5" fill="none" opacity="0.7"/></svg>
+    <img src="assets/creature-cuttlefish.png" width="40" height="40" alt="Cuttlefish" style="border-radius:50%;object-fit:cover;">
   </div>
   <div class="hidden-item" id="item-manta-ray" data-name="Little Manta Ray" data-idx="1" style="top:15%;right:25%;" onclick="findItem(this)">
-    <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><path d="M14,8 Q6,4 2,12 Q6,10 14,14 Q22,10 26,12 Q22,4 14,8Z" fill="#c9a84c" opacity="0.8"/><path d="M14,14 L14,22" stroke="#c9a84c" stroke-width="1.5"/><circle cx="11" cy="10" r="1" fill="#2c1810"/><circle cx="17" cy="10" r="1" fill="#2c1810"/></svg>
+    <img src="assets/creature-manta-ray.png" width="40" height="40" alt="Manta Ray" style="border-radius:50%;object-fit:cover;">
   </div>
   <div class="hidden-item" id="item-trigger-fish" data-name="Trigger Fish" data-idx="2" style="top:55%;left:60%;" onclick="findItem(this)">
-    <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><ellipse cx="14" cy="14" rx="10" ry="6" fill="#c9a84c" opacity="0.8"/><polygon points="24,14 28,10 28,18" fill="#c9a84c" opacity="0.6"/><polygon points="14,8 16,4 18,8" fill="#c9a84c" opacity="0.7"/><circle cx="8" cy="13" r="1.5" fill="#2c1810"/><path d="M6,15 Q7,17 9,16" stroke="#2c1810" stroke-width="0.8" fill="none"/></svg>
+    <img src="assets/creature-trigger-fish.png" width="40" height="40" alt="Trigger Fish" style="border-radius:50%;object-fit:cover;">
   </div>
   <div class="hidden-item" id="item-big-tuna" data-name="Big Tuna" data-idx="3" style="top:40%;left:35%;" onclick="findItem(this)">
-    <svg width="32" height="28" viewBox="0 0 32 28" fill="none"><ellipse cx="16" cy="14" rx="13" ry="7" fill="#c9a84c" opacity="0.8"/><polygon points="29,14 32,8 32,20" fill="#c9a84c" opacity="0.6"/><circle cx="7" cy="13" r="2" fill="#2c1810"/><line x1="4" y1="14" x2="2" y2="14" stroke="#c9a84c" stroke-width="1" opacity="0.5"/></svg>
+    <img src="assets/creature-big-tuna.png" width="40" height="40" alt="Big Tuna" style="border-radius:50%;object-fit:cover;">
   </div>
-  <div class="hidden-item" id="item-british-diver" data-name="British Diver" data-idx="4" style="bottom:25%;right:15%;" onclick="findItem(this)">
-    <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="10" r="6" fill="#c9a84c" opacity="0.7"/><rect x="6" y="7" width="16" height="7" rx="3" fill="none" stroke="#c9a84c" stroke-width="1.5" opacity="0.8"/><circle cx="10" cy="10" r="2.5" fill="none" stroke="#f5edd6" stroke-width="1"/><circle cx="18" cy="10" r="2.5" fill="none" stroke="#f5edd6" stroke-width="1"/><rect x="11" y="16" width="6" height="8" rx="1" fill="#c9a84c" opacity="0.5"/><path d="M10,26 L12,20 M18,26 L16,20" stroke="#c9a84c" stroke-width="1.5" opacity="0.5"/></svg>
-  </div>
-  <div class="hidden-item" id="item-sea-urchins" data-name="Sea Urchins" data-idx="5" style="bottom:15%;left:45%;" onclick="findItem(this)">
-    <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="6" fill="#c9a84c" opacity="0.7"/><line x1="14" y1="2" x2="14" y2="8" stroke="#c9a84c" stroke-width="1.2"/><line x1="14" y1="20" x2="14" y2="26" stroke="#c9a84c" stroke-width="1.2"/><line x1="2" y1="14" x2="8" y2="14" stroke="#c9a84c" stroke-width="1.2"/><line x1="20" y1="14" x2="26" y2="14" stroke="#c9a84c" stroke-width="1.2"/><line x1="6" y1="6" x2="10" y2="10" stroke="#c9a84c" stroke-width="1"/><line x1="18" y1="18" x2="22" y2="22" stroke="#c9a84c" stroke-width="1"/><line x1="22" y1="6" x2="18" y2="10" stroke="#c9a84c" stroke-width="1"/><line x1="6" y1="22" x2="10" y2="18" stroke="#c9a84c" stroke-width="1"/></svg>
+  <div class="hidden-item" id="item-sea-urchins" data-name="Sea Urchins" data-idx="4" style="bottom:15%;left:45%;" onclick="findItem(this)">
+    <img src="assets/creature-sea-urchins.png" width="40" height="40" alt="Sea Urchins" style="border-radius:50%;object-fit:cover;">
   </div>
   <div class="magnify-circle" id="magnifyCircle"></div>
 </div>
@@ -381,18 +383,17 @@ const CONTENT = {
     dialog: [
       {speaker:"narrator",text:"The trail leads to Thailand. Koh Tao. Warm water. Sunlight cutting through the surface in shafts."},
       {speaker:"narrator",text:"A dive log is open on the boat. The entry reads:"},
-      {speaker:"note",text:"It was like another planet down there. Except you were there too, which made it better than any planet."},
-      {speaker:"narrator",text:"The reef is alive with creatures. Find all six things Sam remembers from the dive."}
+      {speaker:"note",text:"It was like another planet down there, and exploring it with you is like a dream come true."},
+      {speaker:"narrator",text:"The reef is alive with creatures. Find all five things Sam remembers from the dive."}
     ],
     hidden_objects: [
-      {id:"cuttlefish",name:"Cuttlefish",found_text:"This guy owned the place. Just floating there, shifting colors, like he paid rent and we were the tourists. Which, fair."},
-      {id:"manta-ray",name:"Little Manta Ray",found_text:"Glided right past us like we weren't even there. Very main character energy."},
+      {id:"cuttlefish",name:"Cuttlefish",found_text:"I think this is my favorite fish. It felt so alien and so much like a UFO, and it was so cool to see Toni excited about it."},
+      {id:"manta-ray",name:"Little Manta Ray",found_text:"Little manta ray, it was just hiding in a cave."},
       {id:"trigger-fish",name:"Trigger Fish",found_text:"This one looked personally offended that we were in its neighborhood. Gave us the dirtiest look a fish can give."},
       {id:"big-tuna",name:"Big Tuna",found_text:"Absolutely massive. After finding out how much it's worth, we definitely should have tried to steal it."},
-      {id:"british-diver",name:"British Diver",found_text:"Random British guy who gave us a big thumbs up underwater. Legend. Hope he's doing well."},
       {id:"sea-urchins",name:"Sea Urchins",found_text:"Remember seeing them move? Remember seeing Toni pick one up with his hands?"}
     ],
-    success_dialog:[{speaker:"narrator",text:"All six found. The dive log entry completes itself, ink spreading across the page like watercolor."}],
+    success_dialog:[{speaker:"narrator",text:"All five found. The dive log entry completes itself, ink spreading across the page like watercolor."}],
     memory_note:{
       title:"Sam's Memory: Koh Tao",
       text:"Diving with you was unreal. There was a cuttlefish just hovering there like it owned the whole reef. A trigger fish that looked personally annoyed we existed. This enormous tuna that had absolutely zero concern about anything. A random British diver who gave us the biggest thumbs up I've ever seen. Sea urchins literally everywhere, like the ocean's version of stepping on a Lego. And through all of it, you were right there next to me, and I kept thinking: this is like another planet. Except you're here too. So it's better."
@@ -437,7 +438,7 @@ const CONTENT = {
   journal_notes: [
     {label:"City Mud Studio",hint:"Two puzzles to solve. How far back can you remember?",solved:"Unlocked: Iced coffee was just an excuse. Sloop was just the beginning."},
     {label:"Gymkhana London",hint:"Name the song that brought the house down.",solved:"Unlocked: Mr. Brightside, screamed until deliriously exhausted."},
-    {label:"Koh Tao Dive",hint:"Six creatures (and one legend) hide in the reef.",solved:"Unlocked: Another planet, except she was there too."},
+    {label:"Koh Tao Dive",hint:"Five creatures hide in the reef.",solved:"Unlocked: Another planet, except she was there too."},
     {label:"Dillon Amphitheater",hint:"Your words are scattered. Put them back together.",solved:"Unlocked: I think we make a great team."}
   ]
 };
@@ -751,7 +752,7 @@ function pickSong(btn, opt) {
 
 // ==================== SCENE 4: KOH TAO UNDERWATER ====================
 let foundItems = 0;
-const totalItems = 6;
+const totalItems = 5;
 let adventureInited = false;
 
 function initAdventure() {
@@ -774,27 +775,33 @@ function handleSceneTouch(e) {
 }
 function updateMagnifier(c, x, y) {
   const circle = document.getElementById('magnifyCircle');
-  circle.style.left = (x - 35) + 'px';
-  circle.style.top = (y - 35) + 'px';
+  circle.style.left = (x - 40) + 'px';
+  circle.style.top = (y - 40) + 'px';
   circle.style.opacity = '1';
 }
 function checkProximity(container, x, y) {
+  let anyNear = false;
   container.querySelectorAll('.hidden-item:not(.found)').forEach(item => {
     const ix = item.offsetLeft + item.offsetWidth / 2;
     const iy = item.offsetTop + item.offsetHeight / 2;
     const dist = Math.sqrt((x - ix) ** 2 + (y - iy) ** 2);
-    item.classList.toggle('near', dist < 80);
+    const isNear = dist < 80;
+    item.classList.toggle('near', isNear);
+    if (isNear) anyNear = true;
   });
+  document.getElementById('magnifyCircle').classList.toggle('near-item', anyNear);
 }
 function findItem(el) {
-  if (el.classList.contains('found')) return;
+  const idx = parseInt(el.dataset.idx);
+  const objData = CONTENT.scene4.hidden_objects[idx];
+  if (el.classList.contains('found')) {
+    showDialog([{speaker:'Evidence Found', text:objData.name + ' - ' + objData.found_text}]);
+    return;
+  }
   el.classList.remove('near');
   el.classList.add('found');
   foundItems++;
   document.getElementById('foundCounter').textContent = 'Evidence: ' + foundItems + ' / ' + totalItems;
-  // Get the found_text from content
-  const idx = parseInt(el.dataset.idx);
-  const objData = CONTENT.scene4.hidden_objects[idx];
   showDialog([{speaker:'Evidence Found', text:objData.name + ' - ' + objData.found_text}]);
   if (foundItems === totalItems) {
     setTimeout(() => {
