@@ -697,8 +697,6 @@ function goToScene(n, transText) {
 }
 
 function beginCase() {
-  AudioManager.init();
-  AudioManager.playMusic(1);
   AudioManager.preloadScene(2);
   showDialog(CONTENT.scene1.dialog, () => {
     goToScene(2, 'Traveling to the pottery studio...');
@@ -1155,6 +1153,16 @@ function shuffle(arr) {
   }
   return arr;
 }
+
+// Start audio on first user interaction (browsers require a gesture for autoplay)
+AudioManager.init();
+const startMusic = () => {
+  AudioManager.playMusic(1);
+  document.removeEventListener('click', startMusic);
+  document.removeEventListener('touchend', startMusic);
+};
+document.addEventListener('click', startMusic);
+document.addEventListener('touchend', startMusic);
 
 // Prevent double-tap zoom on iOS
 document.addEventListener('touchend', function(e) {
