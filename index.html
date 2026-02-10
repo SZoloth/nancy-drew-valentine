@@ -122,7 +122,7 @@ html,body{width:100%;height:100dvh;overflow:hidden;font-family:Georgia,'Times Ne
 
 /* ===== SCENE 4: UNDERWATER ===== */
 .adventure-area{position:absolute;inset:0;bottom:0;cursor:none}
-.hidden-item{position:absolute;width:48px;height:48px;display:flex;align-items:center;justify-content:center;opacity:0;transition:all 0.4s;cursor:none;-webkit-tap-highlight-color:transparent;border-radius:50%;z-index:5;overflow:hidden}
+.hidden-item{position:absolute;width:80px;height:80px;display:flex;align-items:center;justify-content:center;opacity:0;transition:all 0.4s;cursor:none;-webkit-tap-highlight-color:transparent;border-radius:50%;z-index:5;overflow:hidden}
 .hidden-item img{opacity:0;transition:opacity 0.4s}
 .hidden-item.near{opacity:0.7;background:rgba(201,168,76,0.3);animation:itemPulse 1s ease-in-out infinite;box-shadow:0 0 20px rgba(201,168,76,0.5)}
 .hidden-item.near img{opacity:0.5}
@@ -215,19 +215,19 @@ html,body{width:100%;height:100dvh;overflow:hidden;font-family:Georgia,'Times Ne
   <div class="found-counter" id="foundCounter">Evidence: 0 / 5</div>
   <!-- Hidden items positioned across the underwater scene -->
   <div class="hidden-item" id="item-cuttlefish" data-name="Cuttlefish" data-idx="0" style="top:25%;left:20%;" onclick="findItem(this)">
-    <img src="assets/creature-cuttlefish.png" width="40" height="40" alt="Cuttlefish" style="border-radius:50%;object-fit:cover;">
+    <img src="assets/creature-cuttlefish.png" width="64" height="64" alt="Cuttlefish" style="border-radius:50%;object-fit:cover;">
   </div>
   <div class="hidden-item" id="item-manta-ray" data-name="Little Manta Ray" data-idx="1" style="top:15%;right:25%;" onclick="findItem(this)">
-    <img src="assets/creature-manta-ray.png" width="40" height="40" alt="Manta Ray" style="border-radius:50%;object-fit:cover;">
+    <img src="assets/creature-manta-ray.png" width="64" height="64" alt="Manta Ray" style="border-radius:50%;object-fit:cover;">
   </div>
   <div class="hidden-item" id="item-trigger-fish" data-name="Trigger Fish" data-idx="2" style="top:55%;left:60%;" onclick="findItem(this)">
-    <img src="assets/creature-trigger-fish.png" width="40" height="40" alt="Trigger Fish" style="border-radius:50%;object-fit:cover;">
+    <img src="assets/creature-trigger-fish.png" width="64" height="64" alt="Trigger Fish" style="border-radius:50%;object-fit:cover;">
   </div>
   <div class="hidden-item" id="item-big-tuna" data-name="Big Tuna" data-idx="3" style="top:40%;left:35%;" onclick="findItem(this)">
-    <img src="assets/creature-big-tuna.png" width="40" height="40" alt="Big Tuna" style="border-radius:50%;object-fit:cover;">
+    <img src="assets/creature-big-tuna.png" width="64" height="64" alt="Big Tuna" style="border-radius:50%;object-fit:cover;">
   </div>
   <div class="hidden-item" id="item-sea-urchins" data-name="Sea Urchins" data-idx="4" style="bottom:15%;left:45%;" onclick="findItem(this)">
-    <img src="assets/creature-sea-urchins.png" width="40" height="40" alt="Sea Urchins" style="border-radius:50%;object-fit:cover;">
+    <img src="assets/creature-sea-urchins.png" width="64" height="64" alt="Sea Urchins" style="border-radius:50%;object-fit:cover;">
   </div>
   <div class="magnify-circle" id="magnifyCircle"></div>
 </div>
@@ -785,7 +785,7 @@ function checkProximity(container, x, y) {
     const ix = item.offsetLeft + item.offsetWidth / 2;
     const iy = item.offsetTop + item.offsetHeight / 2;
     const dist = Math.sqrt((x - ix) ** 2 + (y - iy) ** 2);
-    const isNear = dist < 80;
+    const isNear = dist < 100;
     item.classList.toggle('near', isNear);
     if (isNear) anyNear = true;
   });
@@ -802,9 +802,9 @@ function findItem(el) {
   el.classList.add('found');
   foundItems++;
   document.getElementById('foundCounter').textContent = 'Evidence: ' + foundItems + ' / ' + totalItems;
-  showDialog([{speaker:'Evidence Found', text:objData.name + ' - ' + objData.found_text}]);
   if (foundItems === totalItems) {
-    setTimeout(() => {
+    // Last item: show found_text, then chain into success flow on dismiss
+    showDialog([{speaker:'Evidence Found', text:objData.name + ' - ' + objData.found_text}], () => {
       showDialog(CONTENT.scene4.success_dialog, () => {
         addInventoryItem(2);
         showMemoryNote(CONTENT.scene4.memory_note, 4, () => {
@@ -812,7 +812,9 @@ function findItem(el) {
           document.getElementById('adventureNext').style.display = 'inline-block';
         });
       });
-    }, 600);
+    });
+  } else {
+    showDialog([{speaker:'Evidence Found', text:objData.name + ' - ' + objData.found_text}]);
   }
 }
 
