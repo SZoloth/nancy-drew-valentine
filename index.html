@@ -165,7 +165,67 @@ body.game-active .hud-btn,body.game-active .start-btn,body.game-active .next-btn
 .word-tile.used{opacity:0.2;cursor:default}
 
 /* ===== SCENE 6: VALENTINE ===== */
-.love-letter{background:linear-gradient(135deg,rgba(30,20,15,0.95),rgba(20,12,8,0.95));border:1px solid rgba(201,168,76,0.3);border-radius:6px;padding:clamp(1.25rem,4vw,2rem);max-width:420px;width:92%;max-height:calc(100dvh - 120px);overflow-y:auto;position:relative}
+
+/* ===== FINAL SCENE BUTTON ===== */
+.final-scene-btn{opacity:0;transform:translateY(20px);transition:opacity 0.6s ease,transform 0.6s ease}
+.final-scene-btn.visible{opacity:1;transform:translateY(0)}
+.final-scene-btn{background:rgba(201,168,76,0.12);border:1px solid var(--gold);color:var(--gold);padding:12px 32px;font-family:Georgia,serif;font-size:1rem;letter-spacing:0.05em;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:all 0.3s;border-radius:2px;margin-top:1.5rem}
+.final-scene-btn:active{background:rgba(201,168,76,0.25);transform:scale(0.98)}
+
+/* ===== SCENE 7: PHOTO GRID ===== */
+#scene7 .scene-bg{background-image:url('assets/scene6-valentine-room.jpg')}
+#scene7 .scene-content{justify-content:flex-start;padding-top:3rem}
+/* Craft design: minimal, intentional, beautiful */
+.photo-grid{
+  columns:2;
+  column-gap:12px;
+  padding:16px;
+  max-width:100%;
+  width:100%;
+  margin:0 auto;
+}
+@media(min-width:600px){.photo-grid{columns:3;max-width:90%}}
+@media(min-width:900px){.photo-grid{columns:4;max-width:85%}}
+@media(min-width:1200px){.photo-grid{columns:5;max-width:80%}}
+.photo-grid img{
+  width:100%;
+  break-inside:avoid;
+  border-radius:2px;
+  margin-bottom:12px;
+  /* Subtle fade-in animation - not distracting */
+  opacity:0;
+  transform:translateY(16px);
+  transition:opacity 0.5s ease,transform 0.5s ease;
+  /* Quality: crisp rendering */
+  image-rendering:-webkit-optimize-contrast;
+  /* Subtle shadow for depth */
+  box-shadow:0 2px 8px rgba(0,0,0,0.15);
+}
+.photo-grid img.visible{
+  opacity:1;
+  transform:translateY(0);
+}
+/* Hover state - subtle, not flashy */
+@media(hover:hover){
+  .photo-grid img:hover{
+    transform:scale(1.02);
+    box-shadow:0 4px 16px rgba(0,0,0,0.25);
+  }
+}
+/* Stagger animation timing */
+.photo-grid img:nth-child(2){transition-delay:0.1s}
+.photo-grid img:nth-child(3){transition-delay:0.2s}
+.photo-grid img:nth-child(4){transition-delay:0.3s}
+.photo-grid img:nth-child(5){transition-delay:0.4s}
+.photo-grid img:nth-child(6){transition-delay:0.5s}
+.photo-grid img:nth-child(7){transition-delay:0.6s}
+.photo-grid img:nth-child(8){transition-delay:0.7s}
+.photo-grid img:nth-child(9){transition-delay:0.8s}
+.photo-grid img:nth-child(10){transition-delay:0.9s}
+.photo-grid img:nth-child(11){transition-delay:1.0s}
+.photo-grid img:nth-child(12){transition-delay:1.1s}
+.love-letter{background:linear-gradient(135deg,rgba(30,20,15,0.95),rgba(20,12,8,0.95));border:1px solid rgba(201,168,76,0.3);border-radius:6px;padding:clamp(1.25rem,4vw,2rem);max-width:420px;width:92%;max-height:calc(100dvh - 120px);overflow-y:auto;position:relative;-ms-overflow-style:none;scrollbar-width:none}
+.love-letter::-webkit-scrollbar{display:none}
 .love-letter::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--burgundy),var(--gold),var(--burgundy));border-radius:6px 6px 0 0}
 .love-letter p{text-align:left;margin-bottom:0.85rem;font-size:clamp(0.95rem,2.6vw,1.05rem);line-height:1.75;color:var(--cream);opacity:0;transform:translateY(8px);transition:opacity 0.6s,transform 0.6s}
 .love-letter p.visible{opacity:1;transform:translateY(0)}
@@ -182,8 +242,8 @@ body.game-active .hud-btn,body.game-active .start-btn,body.game-active .next-btn
 /* ===== SUCCESS MSG ===== */
 .success-msg{font-family:Georgia,serif;font-size:clamp(1rem,2.8vw,1.15rem);color:var(--gold);text-align:center;margin-top:0.75rem;opacity:0;transition:opacity 0.5s}
 .success-msg.visible{opacity:1}
-.next-btn{background:rgba(201,168,76,0.12);border:1px solid var(--gold);color:var(--gold);padding:8px 24px;font-family:Georgia,serif;font-size:0.95rem;letter-spacing:0.05em;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:all 0.3s;border-radius:2px;margin-top:0.75rem;display:none}
-.next-btn:active{background:rgba(201,168,76,0.25)}
+.next-btn{background:var(--gold);border:1px solid var(--gold);color:var(--teal);padding:8px 24px;font-family:Georgia,serif;font-size:0.95rem;letter-spacing:0.05em;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:all 0.3s;border-radius:2px;margin-top:0.75rem;display:none;font-weight:700}
+.next-btn:active{background:var(--gold-light)}
 
 /* ===== CAPTCHA OVERLAY ===== */
 #captchaOverlay{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,0.92);display:flex;align-items:center;justify-content:center;padding:1rem}
@@ -322,8 +382,17 @@ body.game-active .hud-btn,body.game-active .start-btn,body.game-active .next-btn
 <div class="scene-bg"></div>
 <div class="scene-content" style="justify-content:center">
   <div class="love-letter" id="loveLetter"></div>
+  <button class="final-scene-btn" id="finalSceneBtn" onclick="goToScene(7,'One more thing...')">One More Thing</button>
 </div>
 <div class="hearts-container" id="heartsContainer"></div>
+</div>
+
+<!-- ========== SCENE 7: PHOTO GRID ========== -->
+<div id="scene7" class="scene">
+<div class="scene-bg"></div>
+<div class="scene-content" style="justify-content:flex-start;padding-top:1rem">
+  <div class="photo-grid" id="photoGrid"></div>
+</div>
 </div>
 
 <!-- ========== HUD BAR ========== -->
@@ -684,7 +753,36 @@ const CONTENT = {
 
 // ==================== STATE ====================
 let currentScene = 1;
-const totalScenes = 6;
+const totalScenes = 7;
+
+// ==================== DEBUG MODE ====================
+// Add ?scene=N to URL to jump to any scene (e.g., ?scene=7)
+const urlParams = new URLSearchParams(window.location.search);
+const debugScene = urlParams.get('scene');
+const isDebugMode = debugScene && !isNaN(parseInt(debugScene));
+
+// If debug mode, auto-enable game and jump to scene
+if (isDebugMode) {
+  const sceneNum = parseInt(debugScene);
+  if (sceneNum >= 1 && sceneNum <= 7) {
+    currentScene = sceneNum;
+    // Hide captcha and enable game immediately
+    document.getElementById('captchaOverlay').style.display = 'none';
+    document.body.classList.add('game-active');
+    // Show the scene immediately
+    document.querySelectorAll('.scene').forEach(s => s.classList.remove('active'));
+    document.getElementById('scene' + sceneNum).classList.add('active');
+    // Initialize the scene
+    setTimeout(() => {
+      if (sceneNum === 2) initPottery();
+      if (sceneNum === 3) initKaraoke();
+      if (sceneNum === 4) initAdventure();
+      if (sceneNum === 5) initConcert();
+      if (sceneNum === 6) initLoveLetter();
+      if (sceneNum === 7) initPhotoGrid();
+    }, 100);
+  }
+}
 let dialogQueue = [];
 let dialogCallback = null;
 const cluesSolved = [false,false,false,false]; // pottery, gymkhana, underwater, dillon
@@ -780,7 +878,9 @@ function goToScene(n, transText) {
     document.getElementById('scene' + currentScene).classList.remove('active');
     document.getElementById('scene' + n).classList.add('active');
     currentScene = n;
-    AudioManager.playMusic(n);
+    // Don't play scene 6 music automatically - end song plays when signoff is visible
+    // Don't restart music when going to scene 7 either - keep the song playing
+    if (n !== 6 && n !== 7) AudioManager.playMusic(n);
     // Preload next scene
     if (n < totalScenes) AudioManager.preloadScene(n + 1);
     setTimeout(() => {
@@ -790,6 +890,7 @@ function goToScene(n, transText) {
       if (n === 4) initAdventure();
       if (n === 5) initConcert();
       if (n === 6) initLoveLetter();
+      if (n === 7) initPhotoGrid();
     }, 400);
   }, 800);
 }
@@ -1188,7 +1289,10 @@ function checkPhrase() {
 }
 
 // ==================== SCENE 6: LOVE LETTER ====================
+let endSongPlayed = false;
+
 function initLoveLetter() {
+  // Don't play scene 6 music automatically - we'll play the end song when signoff is visible
   const letter = document.getElementById('loveLetter');
   letter.innerHTML = '';
   // Build paragraphs
@@ -1200,14 +1304,121 @@ function initLoveLetter() {
   // Add signoff
   const signoff = document.createElement('div');
   signoff.className = 'signoff';
+  signoff.id = 'loveLetterSignoff';
   signoff.textContent = CONTENT.scene6.signoff;
   letter.appendChild(signoff);
 
   const elements = letter.querySelectorAll('p, .signoff');
   elements.forEach((el, i) => {
-    setTimeout(() => el.classList.add('visible'), 500 + i * 600);
+    setTimeout(() => {
+      el.classList.add('visible');
+      // Check if this is the signoff and if it's in viewport
+      if (el.id === 'loveLetterSignoff' && !endSongPlayed) {
+        // Wait a moment for the fade-in to complete, then check if in viewport and play song
+        setTimeout(() => checkAndPlayEndSong(), 800);
+      }
+    }, 500 + i * 600);
   });
   setTimeout(() => startHearts(), 500 + elements.length * 600 + 400);
+  // Show the final scene button after hearts start
+  setTimeout(() => showFinalSceneButton(), 500 + elements.length * 600 + 800);
+}
+
+function checkAndPlayEndSong() {
+  const signoff = document.getElementById('loveLetterSignoff');
+  if (!signoff || endSongPlayed) return;
+  
+  // Check if signoff is in viewport
+  const rect = signoff.getBoundingClientRect();
+  const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+  
+  // If signoff is visible in viewport (or very close to being visible)
+  if (rect.top < viewportHeight && rect.bottom > 0) {
+    endSongPlayed = true;
+    // Play the end song (Bleachers)
+    AudioManager.playMusic(6);
+  }
+}
+
+// Add scroll listener to check when signoff comes into view
+document.getElementById('loveLetter').addEventListener('scroll', function() {
+  if (!endSongPlayed) {
+    checkAndPlayEndSong();
+  }
+});
+
+// ==================== PHOTO GRID (SCENE 7) ====================
+// Auto-discovers all images from assets/photos/ folder
+// Just add photos to the folder, run: node generate-photos.js
+// Then redeploy - the game will automatically load all photos!
+
+// Default photo list (generated by generate-photos.js)
+const DEFAULT_PHOTOS = [
+  "4193000_4193000-R1-029-13.JPG","CleanShot 2026-02-13 at 13.08.59.png","DSCF0137.JPG","IMG_0002.jpeg","IMG_0085.jpeg","IMG_0092.jpeg","IMG_0368.jpeg","IMG_0403.JPG","IMG_0426.jpeg","IMG_0427.jpeg","IMG_0430.jpeg","IMG_0487.jpeg","IMG_0526.JPG","IMG_0539.jpeg","IMG_0552.jpeg","IMG_0665.jpeg","IMG_1003.jpeg","IMG_1071.JPG","IMG_1094.jpeg","IMG_1611.JPG","IMG_1655.JPG","IMG_1667.jpeg","IMG_1826.jpeg","IMG_1860.jpeg","IMG_1886.JPG","IMG_2021.jpeg","IMG_2044.jpeg","IMG_2119.jpeg","IMG_2279.jpeg","IMG_2887.jpeg","IMG_3089.JPG","IMG_3104.jpeg","IMG_3357.jpeg","IMG_3923.jpeg","IMG_4156.PNG","IMG_4726.jpeg","IMG_4852.jpeg","IMG_5046.JPG","IMG_5072.jpeg","IMG_5170.jpeg","IMG_5496.jpeg","IMG_5522.jpeg","IMG_5563.jpeg","IMG_6646.jpeg","IMG_6707.jpeg","IMG_6920.jpeg","IMG_7373.jpeg","IMG_7809.jpeg","IMG_7915.jpeg","IMG_7974.jpeg","IMG_8016.jpeg","IMG_8030.jpeg","IMG_8080.jpeg","IMG_8222.JPG","IMG_8236.JPG","IMG_8238.JPG","IMG_8345.JPG","IMG_8380.jpeg","IMG_8722.jpeg","IMG_8745.jpeg","IMG_8846.jpeg","IMG_8956.jpeg","IMG_8983.jpeg","IMG_9645.jpeg","IMG_9652.jpeg","IMG_9676.jpeg","IMG_9770.jpeg","IMG_9840.jpeg","IMG_9892.jpeg","IMG_9991.jpeg","the seibels wedding - sunbeam studio photography-1075.jpeg"
+];
+
+function initPhotoGrid() {
+  const grid = document.getElementById('photoGrid');
+  grid.innerHTML = '';
+  
+  // Try to fetch from JSON, fall back to default list
+  fetch('assets/photos.json')
+    .then(res => res.json())
+    .then(photoFiles => {
+      loadPhotos(grid, photoFiles);
+    })
+    .catch(() => {
+      // Fallback to embedded list
+      loadPhotos(grid, DEFAULT_PHOTOS);
+    });
+}
+
+function loadPhotos(grid, photoFiles) {
+  
+  let loadedCount = 0;
+  
+  photoFiles.forEach((filename, index) => {
+    const img = new Image();
+    img.onload = function() {
+      // Only add if it's a valid image (not too small which would indicate a broken image)
+      if (img.width > 50 && img.height > 50) {
+        const imgEl = document.createElement('img');
+        imgEl.src = 'assets/photos/' + filename + '?v=' + Date.now();
+        imgEl.alt = 'Memory photo';
+        grid.appendChild(imgEl);
+        
+        loadedCount++;
+        // Trigger animation after adding
+        setTimeout(() => {
+          imgEl.classList.add('visible');
+        }, 100 + loadedCount * 100);
+      }
+    };
+    img.onerror = function() {
+      // Silently fail for missing images
+    };
+    img.src = 'assets/photos/' + filename;
+  });
+  
+  // Show placeholder if no images found after a delay
+  setTimeout(() => {
+    if (grid.children.length === 0) {
+      const placeholder = document.createElement('p');
+      placeholder.style.cssText = 'color:var(--gold);text-align:center;padding:2rem;font-family:Georgia,serif;opacity:0.7;';
+      placeholder.textContent = 'Add photos to assets/photos/ folder';
+      grid.appendChild(placeholder);
+    }
+  }, 2000);
+}
+
+// ==================== FINAL SCENE BUTTON ====================
+function showFinalSceneButton() {
+  const btn = document.getElementById('finalSceneBtn');
+  if (btn) {
+    setTimeout(() => {
+      btn.classList.add('visible');
+    }, 500);
+  }
 }
 
 function startHearts() {
